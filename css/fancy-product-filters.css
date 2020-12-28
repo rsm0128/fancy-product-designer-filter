@@ -1,9 +1,4 @@
 /* CSS Document */
-
-.fpd-filter-fpf0 {
-	color: #a78f60;
-}
-
 .fpf-filters {
 	cursor: pointer;
 	width: 75px !important;
@@ -13,10 +8,16 @@
 .fpf-filter-icon {
 	width: 65px;
 	margin: 5px !important;
+	border: 2px solid #fff;
+}
+.fpf-item.active {
+	color: #a78f60;
+}
+.fpf-item.active .fpf-filter-icon {
+	outline: 1px solid #999;
 }
 .fpf-filter-icon-title {
-	font-size:12px;
-	margin-left: 5px; 
+	margin-left: 5px !important; 
 }
 .fpf-clear {
 	clear: both;	

@@ -3,8 +3,8 @@
 * Plugin Name: Fancy Product Filters
 * Plugin URI: http://codeable.io/
 * Description:  Add Filters to the Fancy Product Designer PlugIn and add filter support to additional objects
-* Author: Chuck Mailen
-* Version: 1.3.4
+* Author: Chuck Mailen, Cris
+* Version: 2.0
 * Author URI: http://bravetimes.com/
 * License: GPL2
 */
@@ -147,8 +147,7 @@ function fpf_enqueue_scripts() {
 			$is_admin = true;
 		}
 	}
-	// wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.3.0', true );
-	wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), true );
+	wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.3.0', true );
 	if (strpos($settings['modal_top'], 'px') !== false) {
 		$pixel_or_percent = 'px';
 		$color_adjust_top = 153;
@@ -242,7 +241,7 @@ function fpf_enqueue_scripts() {
 		'close_it' => __('Close', 'car-demon')
 	));
 	wp_enqueue_script( 'fpf-calendar-js' );
-	wp_enqueue_style('fpf-css', plugins_url().'/fancy-product-filters/css/fancy-product-filters.css', array(), wp_rand(0,1));
+	wp_enqueue_style('fpf-css', plugins_url().'/fancy-product-filters/css/fancy-product-filters.css');
 	wp_enqueue_style('fpf-calendar-css', plugins_url().'/fancy-product-filters/css/CalendarControl.css');
 	// Adjust modal position if true
 	if ($settings['adjust_modal'] == 'true') {
