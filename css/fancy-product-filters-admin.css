@@ -1,0 +1,197 @@
+/* CSS Document */
+
+.fpe-views-list img {
+	max-width: 300px;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.fpe-views-list label {
+	text-align: center;
+	display: block;
+	padding: 15px;
+	font-size: 18px;
+	font-weight: bold;
+	border-bottom: 1px #000 solid;
+}
+
+.fpd-product-item {
+	width: 400px;
+	border: 1px #000 solid;	
+	padding: 5px;
+	margin-bottom: 0px;
+	margin-top: 5px;
+	font-weight: bold;
+	font-size: 12px;
+	list-style: none;
+	background-color: #4D4949;
+	color: #fff;
+}
+
+.fpe-views-list {
+	max-width: 400px;
+	border: 1px #000 solid;
+	padding: 5px;
+	margin-top: -1px;
+	background-color: #CABDBD;
+	display: none;
+}
+
+.fpe-open {
+	float: right;
+	font-size: 12px;
+	margin-right: 10px;
+	cursor: pointer;
+}
+
+.fpf_left, .fpf_right {
+	float: left;
+}
+
+.fpf_right {
+	margin-left: 20px;	
+}
+
+.fpf_clear {
+	clear: both;
+}
+
+.fpf_customize_view {
+	cursor: pointer;
+	font-weight: normal;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 15px;
+}
+
+/* ===================================== */
+/* Textures */
+/* ===================================== */
+.fpf_select_texture, .fpf_select_texture_icon {
+	width: 300px;
+	margin:10px;
+	background-color: #C0BEBE !important;	
+}
+
+.fpf_select_texture_btn, .fpf_select_texture_icon_btn {
+	width: 150px;
+}
+
+.fpf_add_texture_btn, .fpf_add_texture_icon_btn {
+	display: none;
+	margin-left: 10px;
+}
+
+.fpf_select_texture, .fpf_select_texture_btn, .fpf_add_texture_btn, .fpf_select_texture_icon, .fpf_select_texture_icon_btn, .fpf_add_texture_icon_btn {
+	cursor: pointer;
+}
+
+.texture_preview small {
+	color: #f00;
+	font-weight: bold;
+	display: block;
+	float: right;
+	cursor: pointer;
+}
+
+.texture_preview {
+	max-width: 300px;
+	display: none;	
+}
+
+.texture_preview img {
+	max-width: 250px;	
+}
+
+#current_textures {
+	background-color: #ddd;	
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+}
+
+.fpf_textures {
+	max-width: 250px;
+	margin: 5px;
+	
+}
+
+.remove_texture_btn {
+	cursor: pointer;
+	float: right;
+	background-color: #D30D11;
+	border: none;
+	color: #fff;
+	margin: 5px;
+}
+
+.remove_texture_btn:hover {
+	background-color: #000;
+}
+
+.fpf_texture_box {
+	border: 1px solid #000;
+	max-width: 260px;
+	margin: 5px;
+	text-align: center;
+	float: left;
+}
+
+.manual_style_box {
+	display: none;
+	font-size: 12px;
+}
+
+.manual_style {
+	cursor: pointer;
+	color: #8E0613;
+	display: none;	
+}
+
+.manual_style_input{
+	margin: 10px;
+	width: 250px;	
+}
+
+.style_value {
+	max-width: 150px;	
+}
+
+.fpf_sample_icon {
+	float: right;
+}
+
+.fpf_default_textures_btn {
+	cursor: pointer;	
+}
+
+.fpf_setting {
+	margin-bottom: 15px;
+}
+
+.fpf_setting_value {
+	max-width: 650px;
+	width: 100%;
+}
+.fpf_template_filter_title {
+	margin: 10px;
+}
+.fpf_update_template {
+	margin: 20px;
+}
+.fpf_template_editor, .fpf_quote_fields, .fpf_email_fields, .fpf_template_filter_title {
+	display: none;
+}
+.fpf_template_editor_field {
+	width: 90%;
+	height: 200px;
+	margin-left: auto;
+	margin-right: auto;
+	display: block !important;
+}
+.fpf_template_subject {
+	display: block;
+	width: 300px;
+}

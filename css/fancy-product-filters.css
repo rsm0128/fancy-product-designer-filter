@@ -1,0 +1,185 @@
+/* CSS Document */
+
+.fpd-filter-fpf0 {
+	color: #a78f60;
+}
+
+.fpf-filters {
+	cursor: pointer;
+	width: 75px !important;
+	height: 105px !important;
+	border: none !important;
+}
+.fpf-filter-icon {
+	width: 65px;
+	margin: 5px !important;
+}
+.fpf-filter-icon-title {
+	font-size:12px;
+	margin-left: 5px; 
+}
+.fpf-clear {
+	clear: both;	
+}
+.fpd-filter-options .fpd-cell-0 {
+	display: none;
+}
+.fpd-filter-options label {
+	float:left;
+	width:100%;
+	display:block;	
+}
+
+.fpf-upload-options {
+	padding-left: 22px !important;
+}
+
+.fpf-upload-scale .fpf-transform-options {
+	padding-left: 22px;
+}
+
+.fpf-helper-btn-label {
+	float: left;
+	margin-left: 15px;
+	margin-bottom: 10px;
+	margin-top: 2px;}
+
+.fpd-helper-btns i {
+	display: block;
+	float: left;
+	clear: both;
+}
+.fpf-color-picker-label {
+	margin-left: 5px;
+	padding: 2px;
+}
+.fpd-context-dialog, .sp-container {
+	position: fixed !important;
+}
+.mCSB_dragger_bar {
+	background-color: #a78f60 !important;
+	width: 18px;
+}
+.mCSB_scrollTools_vertical {
+	
+}
+.fpf-save .fpd-icon-layers:before {
+  content: "\e621";
+}
+.fpf-share .fpd-icon-layers:before {
+  content: "\e608";
+}
+.fpd-snackbar {
+    /*position: absolute !important;*/
+	height: 80px;
+	width: 360px;
+	/*font-size: 44px;*/
+	font-family: Futura;
+	text-align: center;
+	padding-top: 30px;
+}
+.fpf-facebook, .fpf-twitter, .fpf-pintrest {
+	width: 30px;
+	height: 30px;
+	margin-top: 4px;
+	float:left;
+}
+.fpf-share-text {
+	float:left;
+}
+.fpf-facebook {
+	margin-left: 65px;
+}
+.fpf-twitter {
+	margin-left: 80px;
+}
+.fpf-pintrest {
+	margin-left: 75px;	
+}
+.fpf_action_label {
+	color: #ffffff;
+	font-size: 12px;
+}
+.fpd-icon-move-up, .fpd-icon-move-down {
+	display: none !important;
+}
+.fpd-content-share-spin {
+	margin:5px;	
+}
+.fpd-more .fpd-dropdown-menu>.fpd-save-pdf {
+	display: none !important;
+}
+.attachment a img {
+	width: auto;
+}
+.under_quote_message, .bottom_quote_message {
+	color: #a78f60;
+	font-family: 'Futura', sans-serif;
+}
+.bottom_quote_message {
+	width: 100%;
+	text-align: center;
+}
+.sending_quote {
+	max-width: 300px;
+	width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+	display: inline-block;
+}
+.sending_quote_title {
+	color: #a78f60;
+	text-align: center;
+	font-family: 'Futura', sans-serif;
+}
+.quote_received {
+	font-size: 24px;
+	color: #a78f60;
+	text-align: center;
+	font-family: 'Futura', sans-serif;
+	margin-top: 20px;
+}
+.fpf_show {
+	display: inline-block !important;
+}
+.fpf_quote_title {
+	font-size: 16px;
+	color: #a78f60;
+	text-align: center;
+	font-family: 'Futura', sans-serif;	
+}
+.fpf-email-design {
+	display: inline-block !important;
+}
+.fpf-email-design-form.fpd-list-row {
+	border-top: none;
+}
+.fpf-email-design-form .fpd-cell-full {
+	padding-top: 1px;
+	padding-bottom: 5px;
+}
+.fpf-email-design-form .fpd-cell-full.fpf-email-title {
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+.fpf-email-design-form input {
+	width: 100%;
+}
+.sending_email {
+	padding: 20px;
+	font-size: 16px;
+	color: #a78f60;
+	text-align: center;
+	font-family: 'Futura', sans-serif;
+}
+.sending_email img {
+	margin: 30px;
+	width: 40px;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+}
+.incomplete{
+	border-color:red!important;
+	background:#f7f7f7;
+}
