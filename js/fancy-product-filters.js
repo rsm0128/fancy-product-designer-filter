@@ -3,6 +3,7 @@
 jQuery.migrateMute = 1;
 jQuery( document ).ready(function($) {
 	var elemType, dimensionLabel, activeElement, modal_top, modal_left, printableArea
+	var masks = {};
 
 	var fpe_loaded = 0;
 	var fpf_loaded = 0;
@@ -40,7 +41,7 @@ jQuery( document ).ready(function($) {
 			if (!$('.fpf-filters').length) {
 
 				// Hide original filters
-				$('.fpd-content-filters > div').css('display', 'none');
+				// $('.fpd-content-filters > div').css('display', 'none');
 
 				// Add button to reset element to original
 				var newFilterBtns = '<label>'+fpfCommonParams.texture_message+'</label>';
@@ -53,13 +54,12 @@ jQuery( document ).ready(function($) {
 				newFilterBtns = newFilterBtns + '</div>';
 
 				// Get our textures
-				var textures = fpfCommonParams.textures;
-				var textures_obj  = $.parseJSON( textures );
+				var textures_obj  = $.parseJSON( fpfCommonParams.textures );
 				var btn_count = 1;
 
 				// Create our custom button html for each texture
 				$.each(textures_obj, function(texture_name, texture_values) {
-					newFilterBtns = newFilterBtns + '<div class="fpd-filter-fpf'+btn_count+' fpf-item fpf-filters fpf-filters-btn" data-filter-title="'+ texture_name +'" data-filter="fpf'+btn_count+'" data-executing="no">';
+					newFilterBtns = newFilterBtns + '<div class="fpd-filter-fpf'+btn_count+' fpf-item fpf-filters fpf-filters-btn" data-type="'+ texture_name + '" data-filter-title="'+ texture_name + '" data-filter="fpf'+btn_count+'" data-executing="no">';
 						newFilterBtns = newFilterBtns + '<img class="fpf-filter-icon" src="'+texture_values['icon']+'" title="'+texture_name+'" alt="'+texture_name+'" />';
 						// newFilterBtns = newFilterBtns + '<div class="fpf-clear"></div>';
 						newFilterBtns = newFilterBtns + '<div class="fpf-filter-icon-title">';
@@ -67,6 +67,11 @@ jQuery( document ).ready(function($) {
 						newFilterBtns = newFilterBtns + '</div>';
 					newFilterBtns = newFilterBtns + '</div>';
 					++btn_count;
+
+					// Prepare mask
+					new fabric.Image.fromURL( texture_values['texture'] , function( img ){
+						masks[texture_name] = img;
+					} );
 				});
 
 				// Append our custom button HTML to the grid with the other filters
@@ -113,22 +118,128 @@ jQuery( document ).ready(function($) {
 					$('.fpd-right .fpd-icon-more').after('<span class="fpf_action_label">'+action_label+'</span>');
 
 				}
+
+				// Disable GL filter
+				fabric.enableGLFiltering = false;
+
+				let orgGetFilter = FPDUtil.getFilter;
+				FPDUtil.getFilter = function(type, opts) {
+					let filter = orgGetFilter.apply(null, [type, opts]);
+					if (null === filter && (type in textures_obj)) {
+						filter = new fabric.Image.filters.Mask({mask: masks[type]});
+					}
+					return filter;
+				}
 			}
 		});
 
 		// Filter click action
-		$(document).on('click', '.fpf-filters-btn', function() {
+		$(document).on('click', '.fpf-filters-btn', function(e) {
+			return;
+			console.log('filter');
+
 			// if executing then return
-			if ($('body').data('executing')) {
+			/*if ($('body').data('executing')) {
 				// do nothing because we're already doing something
-			} else {
+			} else {*/
 				// add executing data to all filters
 				$('body').data('executing', true)
 				$('.fpf-item').css('color', '#888');
 				$(this).css('color', '#a78f60');
-				clickCustomFilter(activeElement, this);
+				clickCustomFilter(this);
+				$('body').data('executing', false)
+			// }
+		});
+	}
+
+	// Define custom fabric mask filter
+	function fpf_init_custom_filter() {
+		fabric.Image.filters.Mask = fabric.util.createClass(fabric.Image.filters.BaseFilter, {
+			type: 'Mask',
+			initialize: function(options) {
+				this.mask = options.mask || null;
+				this.channel = [ 0, 1, 2, 3 ].indexOf( options.channel ) > -1 ? options.channel : 0;
+		  	},
+			applyTo2d: function(options) {
+				if(!this.mask) return;
+				var maskEl = this.mask._originalElement,
+					maskCanvasEl = fabric.util.createCanvasElement(),
+					channel = this.channel,
+					imageData = options.imageData,
+					data = imageData.data,
+					iLen = data.length,
+					i;
+
+				maskCanvasEl.width = maskEl.width = imageData.width;
+				maskCanvasEl.height = maskEl.height = imageData.height;
+
+				maskCanvasEl.getContext('2d').drawImage(maskEl, 0, 0, maskEl.width, maskEl.height);
+				var maskImageData = maskCanvasEl.getContext('2d').getImageData(0, 0, maskEl.width, maskEl.height),
+
+				maskData = maskImageData.data;
+				maskImageData.crossOrigin = "Anonymous";
+
+				for ( i = 0; i < iLen * 4; i += 4 ) {
+					if (data[ i + 3 ] == 0) {
+						data[ i + 3 ] = 0;
+					} else {
+						mask_alpha = maskData[ i + 3 ];
+						mask_alpha = 255-mask_alpha;
+						data[ i + 3 ] = mask_alpha;
+					}
+				}
 			}
 		});
+
+		fabric.Image.filters.Mask.fromObject = function(object) {
+			return new fabric.Image.filters.Mask(object);
+		};
+	}
+	
+	// clickCustomFilter()
+	function clickCustomFilter(btn) {
+		var customFilter = $(btn).data('filter');
+		if (customFilter == 'fpf0') return;
+
+		var customFilterTitle = $(btn).data('filter-title');
+
+		// Get our textures
+		var textures_obj  = $.parseJSON( fpfCommonParams.textures );
+		var btn_count = 1;
+		var mask_img = textures_obj[customFilterTitle]['texture'];
+		var mask_fabric = masks[customFilterTitle];
+
+		let $container = $(btn).closest('.fpd-image-editor-container');
+		let $canvas = $container.find('canvas:first-child').get(0);
+		let $loader = $container.children('.fpd-loader-wrapper');
+
+		if ($canvas.length == 0) return;
+		var context = $canvas.getContext('2d'),
+			imageData = context.getImageData(0,0,$canvas.width, $canvas.height),
+			data = imageData.data,
+			maskEl = mask_fabric._originalElement,
+			maskCanvasEl = fabric.util.createCanvasElement(),
+			channel = 0,
+			i;
+		maskCanvasEl.width = maskEl.width = imageData.width;
+		maskCanvasEl.height = maskEl.height = imageData.height;
+
+		maskCanvasEl.getContext('2d').drawImage(maskEl, 0, 0, maskEl.width, maskEl.height);
+		var maskImageData = maskCanvasEl.getContext('2d').getImageData(0, 0, maskEl.width, maskEl.height),
+
+		maskData = maskImageData.data;
+		maskImageData.crossOrigin = "Anonymous";
+
+		for ( i = 0; i < imageData.width * imageData.height * 4; i += 4 ) {
+			if (data[ i + 3 ] == 0) {
+				data[ i + 3 ] = 0;
+			} else {
+				mask_alpha = maskData[ i + 3 ];
+				mask_alpha = 255-mask_alpha;
+				data[ i + 3 ] = mask_alpha;
+			}
+		}
+		context.putImageData( imageData, 0, 0 );
 	}
 
 	function fpf_init_stage() {
@@ -163,67 +274,12 @@ jQuery( document ).ready(function($) {
 	}
 
 	function fpf_init_designer() {
-
-		// When element is added make sure modal stays in place
-		// fpd_container.on('elementAdd', function(evt, object) {
-		// 	adjust_modal();
-		// });
-
-		// When element is added check if it's the base layer, if it is then hide it for right now
-		/*fpd_container.on('elementAdd', function(evt, object) {
-			if (!object) {
-				return
-			}
-
-			if (object.title == 'Base') {
-				printableArea = object;
-				printableArea.visible = false;
-			}
-			if (FPDUtil.getType(object.type) == 'image' && object.isCustom) {
-				// if this is the first time it has been added then give it a unique name
-				if (typeof(object.originParams.source) == 'undefined') {
-					if (typeof(object.title_id) == 'undefined') {
-						object.title_id = Math.floor((Math.random() * 9999) + 1001)
-						// add the random title_id to the begining of the title so the same file can be used multiple times
-						object.title = object.title_id + '_' + object.title;
-					}
-				}
-				if (typeof(printableArea) != 'undefined') {
-					printableArea.visible = true;
-				}
-			}
-		});*/
-
-		// When element is removed check if it's a custom layer, if it is then hide printableArea
-		/*fpd_container.on('elementRemove', function(evt, object) {
-			if (object == null) {
-				return
-			}
-
-			console.log(object);
-
-			if (FPDUtil.getType(object.type) == 'image' && object.isCustom) {
-				if (typeof(printableArea) != 'undefined') {
-					printableArea.visible = false;
-				}
-			}
-
-			managedDimensionLabel(object, 'remove', 0);
-			adjust_modal();
-		});*/
-
 		// Hook the Fancy Product Designer API on the elementSelect event
 		fpd_container.on('elementSelect', function(evt, object) {
 			if (object == null) {
 				return
 			}
-			console.log('teest');
 
-			// = make sure modal box isn't off top of screen
-			adjust_modal();
-			
-			// = hide social share
-			// $('.fpd-content-share').addClass('fpd-hidden');
 			activeElement = object;
 			var my_stage = getCurrentStage();
 			// ========================================
@@ -231,128 +287,9 @@ jQuery( document ).ready(function($) {
 			// ========================================
 			// Loop objects and see if Dimension box exists, if it does remove it
 			var currentObjects = getCurrentStage().getObjects();
-
-			var showDimensionsBox
 			var currentViewIndex = currentObjects.length;
 
-			/*for(var i=0; i < currentObjects.length; ++i) {
-				if (currentObjects[i]['title'] == 'Show Dimensions') {
-					showDimensionsBox = currentObjects[i];
-					my_stage.remove(showDimensionsBox);
-					my_stage.renderAll();
-					my_stage.calcOffset();
-				}
-			} // end objects loop*/
-
-			// Check if this is a custom object, if it is then add a dimension box & show printable area (base)
-			if (object != null && object.hasOwnProperty('params') && object.params['isCustom'] == true) {
-				managedDimensionLabel(object, 'add', currentViewIndex);
-				printableArea.visible = true;
-				my_stage.renderAll();
-			} else {
-				my_stage.remove(dimensionLabel);
-				my_stage.renderAll();
-				if (typeof(printableArea) != 'undefined') {
-					printableArea.visible = false;
-				}
-			} // end if isCustom = true
-			// ========================================
-			// end manage dimensions box
-			// ========================================
-
-			// ========================================
-			// Add color selector if this is 'premium product' and the selected element is the 'color layer'
-			// ========================================
-			if (object != null && (object['title'] == fpfCommonParams.colorLayerTitle || object['title']== 'Sleeve Color')) {
-				if (fpfCommonParams.premiumProduct == true) {
-					// change what the choose button says
-					var elemParams = object['params'];
-					$('.fpd-color-picker').append('<input type="text" value="'+(elemParams.currentColor ? elemParams.currentColor : elemParams.colors[0])+'" />');
-					$('.fpd-color-picker').find('input').spectrum("destroy").spectrum({
-						preferredFormat: "hex",
-						showInput: true,
-						change: function(color) {
-							FancyProductDesigner.prototype.setElementParameters(object, {currentColor: color.toHexString()});
-							// change color picker label color
-							var rgb = color.toRgbString();
-							var colors = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-							var brightness = 1;
-							var r = colors[1];
-							var g = colors[2];
-							var b = colors[3];
-							var colorAvg = ((parseInt(r) + parseInt(g) + parseInt(b))/3);
-							if (colorAvg < 122) {
-								$('.fpf-color-picker-label').css('color', '#fff');
-							} else {
-								$('.fpf-color-picker-label').css('color', '#000');
-							}
-							// end change color picker label color
-							my_stage.renderAll();
-						}
-					});
-					$('.sp-preview-inner').html('<div class="fpf-color-picker-label">'+fpfCommonParams.colorPickerLabel+'</div>');
-					$('.sp-choose').html(fpfCommonParams.choose_button);
-				}
-			}
-			// ========================================
-			// end premium product color selector
-			// ========================================
-
-			var customElements = fancyProductDesigner.getCustomElements();
-			$.each(customElements, function(key, value) {
-				var customItemTitle = value['element']['title'];
-				if (object['title'] == customItemTitle) {
-					if (typeof(object['_element']) == 'undefined') {
-						elemType = 'text';
-						// Hide old filter buttons
-						$('.fpd-filter-options .fpd-filter-no').addClass('fpd-hidden');
-						$('.fpd-filter-options .fpd-filter-grayscale').addClass('fpd-hidden');
-						$('.fpd-filter-options .fpd-filter-sepia').addClass('fpd-hidden');
-						$('.fpd-filter-options .fpd-filter-sepia2').addClass('fpd-hidden');
-						// Hide our filter buttons
-						$('.fpd-filter-options').addClass('fpd-hidden');
-						// Show our scale HTML
-						$('.fpf-transform-options').removeClass('fpd-hidden');
-					} else {
-						elemType = 'image';
-						// Hide old filter buttons
-						$('.fpd-filter-options .fpd-filter-no').removeClass('fpd-hidden');
-						$('.fpd-filter-options .fpd-filter-grayscale').removeClass('fpd-hidden');
-						$('.fpd-filter-options .fpd-filter-sepia').removeClass('fpd-hidden');
-						$('.fpd-filter-options .fpd-filter-sepia2').removeClass('fpd-hidden');
-						$('.fpd-filter-options').removeClass('fpd-hidden');
-						$('.fpd-filter-options .fpf-filters-btn').removeClass('fpd-hidden');
-						$('.fpd-filter-options .fpf-filters-btn').removeClass('fpd-hidden');
-						// Show our scale HTML
-						$('.fpf-transform-options').removeClass('fpd-hidden');
-						// Turn off previous .on('click') events added from last time an element was selected
-						$('body .fpf-filters-btn').off('click');
-						/*// Run this when our filter button is clicked
-						$('body .fpf-filters-btn').on('click', function() {
-							// if executing then return
-							if ($('body').data('executing')) {
-								// do nothing because we're already doing something
-							} else {
-								// add executing data to all filters
-								$('body').data('executing', true)
-								$('.fpf-item').css('color', '#888');
-								$(this).css('color', '#a78f60');
-								clickCustomFilter(object, this);
-							}
-						});*/
-					}
-				}
-			}); // end customElements.each
-			// Limit the scale slider
-			/*$( ".fpd-scale-slider" ).slider({
-			  max: fpfCommonParams.max_scale
-			});*/
-			$('.fpd-item').on('click', function () {
-				adjust_modal();
-			});
-			$('.sp-choose').on('click', function() {
-				adjust_modal();
-			});
+			
 			return true;
 		});
 
@@ -406,7 +343,7 @@ jQuery( document ).ready(function($) {
 				evt.preventDefault();
 				var stage_width = my_stage.width;
 				var stage_height = my_stage.height;
-				FancyProductDesigner.prototype.deselectElement();
+				fancyProductDesigner.deselectElement();
 				
 				if (typeof(printableArea) != 'undefined') {
 					printableArea.opacity = 0;
@@ -423,7 +360,7 @@ jQuery( document ).ready(function($) {
 				setTimeout(function(){
 					var orientation = my_stage.getWidth() > my_stage.getHeight() ? 'l' : 'p';
 					var doc = new jsPDF(orientation, 'mm', [stage_width * 0.26, stage_height * 0.26]),
-						viewsDataURL = FancyProductDesigner.prototype.getViewsDataURL('jpeg', 'white');
+						viewsDataURL = fancyProductDesigner.getViewsDataURL('jpeg', 'white');
 	
 					for(var i=0; i < viewsDataURL.length; ++i) {
 						doc.addImage(viewsDataURL[i], 'JPEG', 0, 0);
@@ -439,9 +376,9 @@ jQuery( document ).ready(function($) {
 					}
 					doc.save('Product.pdf');
 					// Remove elements we just added
-					FancyProductDesigner.prototype.removeElement('PDF Label');
-					FancyProductDesigner.prototype.removeElement('PDF Label Back');
-					FancyProductDesigner.prototype.removeElement('Watermark');
+					fancyProductDesigner.removeElement('PDF Label');
+					fancyProductDesigner.removeElement('PDF Label Back');
+					fancyProductDesigner.removeElement('Watermark');
 				}, 1000);
 			}).css('display', 'block');
 		} // end print pdf
@@ -499,7 +436,7 @@ jQuery( document ).ready(function($) {
 			var currentObjects = getCurrentStage().getObjects();
 			var my_stage = getCurrentStage();
 			my_stage.setActiveObject(currentObjects[0]);
-			FancyProductDesigner.prototype.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
+			fancyProductDesigner.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
 			$('.fpd-fill-options').addClass('fpd-hidden');
 			$('.fpd-text-options').addClass('fpd-hidden');
 			$('.fpf-transform-options').addClass('fpd-hidden');
@@ -553,7 +490,7 @@ jQuery( document ).ready(function($) {
 				flds.action = 'fpf_send_email';
 				fpf_add_watermark();
 				fpf_add_product_details();
-				FancyProductDesigner.prototype.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
+				fancyProductDesigner.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
 				if (typeof(printableArea) != 'undefined') {
 					printableArea.opacity = 0;
 				}
@@ -566,7 +503,7 @@ jQuery( document ).ready(function($) {
 					var ctx = canvas.getContext("2d");
 	
 					// Get a list of current views
-					var viewsDataURL = FancyProductDesigner.prototype.getViewsDataURL(),
+					var viewsDataURL = fancyProductDesigner.getViewsDataURL(),
 						images = new Array(),
 						imageLoop = 0;
 
@@ -579,7 +516,7 @@ jQuery( document ).ready(function($) {
 							ctx.drawImage(img, 0, -1);
 							
 							// keep dialog box open
-							FancyProductDesigner.prototype.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
+							fancyProductDesigner.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
 	
 							// load the back image
 							var img2 = new Image();
@@ -592,7 +529,7 @@ jQuery( document ).ready(function($) {
 								// convert tempoary canvas to jpeg
 								var product_image = canvas.toDataURL("image/jpeg");
 								flds.product_image = product_image;
-								FancyProductDesigner.prototype.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
+								fancyProductDesigner.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
 								setTimeout(function(){ 
 									$.ajax({
 										type: 'POST',
@@ -600,10 +537,10 @@ jQuery( document ).ready(function($) {
 										data: flds,
 										success: function(response) {
 											// remove our extra details
-											FancyProductDesigner.prototype.removeElement('PDF Label');
-											FancyProductDesigner.prototype.removeElement('PDF Label Back');
-											FancyProductDesigner.prototype.removeElement('Watermark');
-											FancyProductDesigner.prototype.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
+											fancyProductDesigner.removeElement('PDF Label');
+											fancyProductDesigner.removeElement('PDF Label Back');
+											fancyProductDesigner.removeElement('Watermark');
+											fancyProductDesigner.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
 											// reset printArea
 											if (typeof(printableArea) != 'undefined') {
 												printableArea.opacity = 1;
@@ -619,7 +556,7 @@ jQuery( document ).ready(function($) {
 											}, 5000);
 										},
 										error: function(error) {
-											FancyProductDesigner.prototype.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
+											fancyProductDesigner.callDialogContent('email-design', 'EMAIL YOUR DESIGN', null, true);
 											$('.sending_email').html('<div class="email_received">'+error+'</div>');
 											$('.fpd-full-loader').removeClass('fpf_show');
 											$('.fpf-email-design-form').slideDown();
@@ -652,7 +589,7 @@ jQuery( document ).ready(function($) {
 				var currentObjects = getCurrentStage().getObjects();
 				var my_stage = getCurrentStage();
 				my_stage.setActiveObject(currentObjects[0]);
-				FancyProductDesigner.prototype.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
+				fancyProductDesigner.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
 				$('.fpd-fill-options').addClass('fpd-hidden');
 				$('.fpd-text-options').addClass('fpd-hidden');
 				$('.fpf-transform-options').addClass('fpd-hidden');
@@ -688,7 +625,7 @@ jQuery( document ).ready(function($) {
 				// add watermark to image
 				fpf_add_watermark();
 				// reopen the dialogue box because adding the watermark closed it
-				FancyProductDesigner.prototype.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
+				fancyProductDesigner.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
 				setTimeout(function(){ 
 					// Create temp canvas, add image as jpeg, reduce size and send to server
 					var img = document.createElement("img");
@@ -699,7 +636,7 @@ jQuery( document ).ready(function($) {
 					img.crossOrigin = "Anonymous";
 
 					// Get a list of current views
-					var viewsDataURL = FancyProductDesigner.prototype.getViewsDataURL(),
+					var viewsDataURL = fancyProductDesigner.getViewsDataURL(),
 					images = new Array(),
 					imageLoop = 0;
 
@@ -710,7 +647,7 @@ jQuery( document ).ready(function($) {
 					img.onload = function() {
 						img.crossOrigin = "Anonymous";
 						// Keep dialogue box open
-						FancyProductDesigner.prototype.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
+						fancyProductDesigner.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
 
 						// add front image to temporary canvas
 						ctx.drawImage(img, 0, -1);
@@ -722,17 +659,17 @@ jQuery( document ).ready(function($) {
 						img2.onload = function() {
 							img2.crossOrigin = "Anonymous";
 							// Keep dialogue box open
-							FancyProductDesigner.prototype.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
+							fancyProductDesigner.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
 
 							// add back image to temporary canvas
 							ctx.drawImage(img2, 0, 1198);
 
 							// Keep dialogue box open
-							FancyProductDesigner.prototype.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
+							fancyProductDesigner.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
 
 							setTimeout(function(){ 
 								// Keep dialogue box open
-								FancyProductDesigner.prototype.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
+								fancyProductDesigner.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
 								var share_image = canvas.toDataURL("image/jpeg");
 								var share_to = $(shareElem).data('share');
 								$.ajax({
@@ -748,10 +685,10 @@ jQuery( document ).ready(function($) {
 										// remove watermark
 										printableArea.opacity = 1;
 										printableArea.visible = false;
-										FancyProductDesigner.prototype.removeElement('Watermark');
+										fancyProductDesigner.removeElement('Watermark');
 
 										// Keep dialogue box open
-										FancyProductDesigner.prototype.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
+										fancyProductDesigner.callDialogContent('edit', 'SHARE YOUR DESIGN', null, false);
 
 										$('.fpd-content-share-spin').html('');
 										$('.fpf-share-btn').css('opacity', '1');
@@ -774,7 +711,7 @@ jQuery( document ).ready(function($) {
 
 		var start_dropdown = function() {
 			// Make sure the dimensions label has been removed
-			FancyProductDesigner.prototype.deselectElement();
+			fancyProductDesigner.deselectElement();
 			var currentObjects = getCurrentStage().getObjects();
 			var showDimensionsBox
 			var currentViewIndex = currentObjects.length;
@@ -811,55 +748,13 @@ jQuery( document ).ready(function($) {
 		});
 	}
 
-	// Define custom fabric mask filter
-	function fpf_init_custom_filter() {
-		fabric.Image.filters.MaskFilter = fabric.util.createClass({
-			type: 'MaskFilter',
-			initialize: function(options) {
-				this.mask = options.mask || null;
-				this.channel = [ 0, 1, 2, 3 ].indexOf( options.channel ) > -1 ? options.channel : 0;
-			},
-			applyTo: function(canvasEl) {
-				if(!this.mask) return;
-				var context = canvasEl.getContext('2d'),
-					imageData = context.getImageData(0, 0, canvasEl.width, canvasEl.height),
-					data = imageData.data,
-					maskEl = this.mask._originalElement,
-					maskCanvasEl = fabric.util.createCanvasElement(),
-					channel = this.channel,
-					i;
-				maskCanvasEl.width = imageData.width;
-				maskCanvasEl.height = imageData.height;
-				maskEl.width = imageData.width;
-				maskEl.height = imageData.height;
-	
-				maskCanvasEl.getContext('2d').drawImage(maskEl, 0, 0, maskEl.width, maskEl.height);
-				var maskImageData = maskCanvasEl.getContext('2d').getImageData(0, 0, maskEl.width, maskEl.height),
-					
-					maskData = maskImageData.data;
-					maskImageData.crossOrigin = "Anonymous";
-					
-				for ( i = 0; i < imageData.width * imageData.height * 4; i += 4 ) {
-					if (data[ i + 3 ] == 0) {
-						data[ i + 3 ] = 0;
-					} else {
-						mask_alpha = maskData[ i + 3 ];
-						mask_alpha = 255-mask_alpha;
-						data[ i + 3 ] = mask_alpha;
-					}
-				}
-				context.putImageData( imageData, 0, 0 );
-			}
-		});
-	}
-
 	// Extends FancyProductDesigner.addElement
 	function fpf_extend_prototype_add_element() {
 		// Save the original function to override it
-		var fpf_addElement = FancyProductDesigner.prototype.addElement;
+		var fpf_addElement = fancyProductDesigner.addElement;
 		// Hook Fancy Product Designer API when an element is added to the stage
 		console.log(FancyProductDesigner);
-		FancyProductDesigner.prototype.addElement = function(type, source, title, params, viewIndex) {
+		fancyProductDesigner.addElement = function(type, source, title, params, viewIndex) {
 			console.log('addElement');
 			var returnValue = fpf_addElement.apply(this, arguments);
 			var my_stage = getCurrentStage();
@@ -987,176 +882,6 @@ jQuery( document ).ready(function($) {
 		return true;
 	}
 
-	// clickCustomFilter()
-	function clickCustomFilter(activeObject, btn) {
-		var my_stage = getCurrentStage();
-		var customFilter = $(btn).data('filter');
-		var customFilterTitle = $(btn).data('filter-title');
-		// Get our textures
-		var textures = fpfCommonParams.textures;
-		var textures_obj  = $.parseJSON( textures );
-		var btn_count = 1;
-
-		// Create our custom code for each texture
-		$.each(textures_obj, function(texture_name, texture_values) {
-			if (customFilter == 'fpf'+btn_count) {
-				overlay = activeObject.source;
-				var texture = texture_name;
-				mask_img = texture_values['texture'];
-			}
-			++btn_count;
-		});
-
-		if (elemType == 'text') {
-			if (customFilter == 'fpf0') {
-				currentColor = activeObject.params['currentColor'];
-				newParams = activeObject.params;
-				newParams['pattern'] = '';
-				FancyProductDesigner.prototype.setElementParameters(activeObject, newParams);
-			} else {
-				fabric.Image.fromURL(mask_img, function(img) {
-					var fill_scale = activeObject.params['scale'];
-
-					img.width = activeObject.params['x'];
-					img.height = activeObject.params['y'];
-					
-					img.scaleToWidth(100/fill_scale);
-
-					var patternSourceCanvas = new fabric.StaticCanvas();
-					patternSourceCanvas.add(img);
-					var pattern = new fabric.Pattern({
-					  source: function() {
-						patternSourceCanvas.setDimensions({
-						  width: img.getWidth(),
-						  height: img.getHeight()
-						});
-						return patternSourceCanvas.getElement();
-					  },
-					  repeat: 'repeat'
-					});
-					activeObject.fill = pattern;
-					my_stage.renderAll();
-					$('#select2-enka-container').trigger('change');
-				});
-			}
-			// remove executing data from filter buttons
-			$('body').data('executing', false);
-			// End elemType - text
-		} else if (elemType == 'image') {
-			// remove any previous mask filter
-			var originalSource = activeObject.params['originalSrc'];
-			if (customFilter != 'fpf0') {
-				// original FPF loading image has been disabled
-				/*
-				var loadingParams = [];
-				loadingParams['scaleX'] = 1;
-				loadingParams['scaleY'] = 1;
-				loadingParams['scale'] = 1;
-				loadingParams['degree'] = 0;
-				loadingParams['autoCenter'] = true;
-				loadingParams['zChangeable'] = false;
-				loadingParams['boundingBox'] = "Base";
-				loadingParams['boundingBoxClipping'] = 1;
-				var loading = fpfCommonParams.loading_pic;
-				FancyProductDesigner.prototype.addElement('image', loading, 'Load Mask Filter', loadingParams);
-				*/
-				// use built in FPD loading screen
-				$('.fpd-full-loader').addClass('fpf_show');
-				new fabric.Image.fromURL( overlay , function( img ){});
-			}
-			if (originalSource) {
-				var newParams = activeObject.params;
-				var newTitle = activeObject.title;
-				var newViewIndex = activeObject.viewIndex;
-				FancyProductDesigner.prototype.removeElement(newTitle);
-				var tmp = activeObject;
-				if (customFilter != 'fpf0') {
-					newParams['originalScaleX'] = newParams['scaleX'];
-					newParams['originalScaleY'] = newParams['scaleY'];
-					newParams['originalScale'] = newParams['scale'];
-					newParams['scaleX'] = 0.001;
-					newParams['scaleY'] = 0.001;
-					newParams['scale'] = 0.001;
-				}
-				FancyProductDesigner.prototype.addElement('image', originalSource, newTitle, newParams, newViewIndex);
-				FancyProductDesigner.prototype.callDialogContent('edit', 'EDIT THIS GARMENT', null, false);
-				if (customFilter == 'fpf0') {
-					// reopen dialog box - set delay to give element time to be added
-					setTimeout(function(){ 
-						var stageObjects = my_stage.getObjects();
-						$.each(stageObjects, function(i, v) {
-							if(stageObjects[i].title == newTitle) {
-								thisElem = stageObjects[i];
-							}
-						});
-						my_stage.setActiveObject(thisElem);
-						// remove executing data from filter buttons
-						$('body').data('executing', false);
-					}, 1000);
-				}
-				$('.fpd-filter-options').removeClass('fpd-hidden');
-				$('.fpd-transform-options').removeClass('fpd-hidden');
-				$('.fpd-helper-btns').removeClass('fpd-hidden');
-			} // end remove previous mask filter
-			// load overlay
-			if (customFilter != 'fpf0') {
-				if (typeof(activeObject.originParams.source) == 'undefined') {
-					var original = overlay;
-				} else {
-					var original = activeObject.originParams.source;
-				}
-				new fabric.Image.fromURL( original , function( img ){
-					image = img;
-					// load mask inside overlay
-					new fabric.Image.fromURL( mask_img , function( img ){
-						mask1 = img;
-			
-						// push mask filter
-						image.filters.push( new fabric.Image.filters.MaskFilter( { 'mask': mask1 } ) );
-						
-						// apply mask filter
-						image.applyFilters( function() {
-							var newParams = activeObject.params;
-							if (typeof(newParams['originalSrc']) == 'undefined') {
-								newParams['originalSrc'] = activeObject.source;
-							}
-							if (typeof(newParams['originalScale']) != 'undefined') {
-								newParams['scaleX'] = newParams['originalScaleX'];
-								newParams['scaleY'] = newParams['originalScaleY'];
-								newParams['scale'] = newParams['originalScale'];
-							}
-							newParams['customFilterTitle'] = customFilterTitle;
-							var newTitle = activeObject.title;
-							var newViewIndex = activeObject.viewIndex;
-							FancyProductDesigner.prototype.removeElement(newTitle);
-							// remove loading image
-							$('.fpd-full-loader').removeClass('fpf_show');
-							// original FPF loading image has been disabled
-							//FancyProductDesigner.prototype.removeElement('Load Mask Filter');
-							FancyProductDesigner.prototype.addElement('image', image._element.src, newTitle, newParams, newViewIndex);
-							FancyProductDesigner.prototype.callDialogContent('edit', 'EDIT YOUR DESIGN', null, false);
-							// reopen dialog box - set delay to give element time to be added
-							setTimeout(function(){ 
-								var stageObjects = my_stage.getObjects();
-								$.each(stageObjects, function(i, v) {
-									if(stageObjects[i].title == newTitle) {
-										thisElem = stageObjects[i];
-									}
-								});
-								my_stage.setActiveObject(thisElem);
-								// remove executing data from filter buttons
-								$('body').data('executing', false);
-							}, 1000);
-							// FancyProductDesigner.prototype.callDialogContent('edit', 'EDIT YOUR DESIGN', null, false);
-							$('.fpd-filter-options').removeClass('fpd-hidden');
-							$('.fpd-transform-options').removeClass('fpd-hidden');
-							$('.fpd-helper-btns').removeClass('fpd-hidden');
-						}); // end apply filter
-					} ); // end new fabric image mask
-				} ); // end new fabric image overlay
-			} // end if not customFilter fpf0
-		} // end elemType - image
-	}
 
 
 	// fpf_add_watermark()
@@ -1176,7 +901,7 @@ jQuery( document ).ready(function($) {
 		waterParams['x'] = my_stage.width-parseInt(w)+parseInt(fpfCommonParams.water_mark_left);
 		waterParams['y'] = 0+parseInt(h)+parseInt(fpfCommonParams.water_mark_top);
 		waterParams['opacity'] = fpfCommonParams.watermark_opacity
-		FancyProductDesigner.prototype.addElement('image', watermark, 'Watermark', waterParams, 0);
+		fancyProductDesigner.addElement('image', watermark, 'Watermark', waterParams, 0);
 	}
 
 	// fpf_add_product_details()
@@ -1417,7 +1142,7 @@ jQuery( document ).ready(function($) {
 				var ctx = canvas.getContext("2d");
 
 				// Get a list of current views
-				var viewsDataURL = FancyProductDesigner.prototype.getViewsDataURL(),
+				var viewsDataURL = fancyProductDesigner.getViewsDataURL(),
 					images = new Array(),
 					imageLoop = 0;
 
@@ -1449,9 +1174,9 @@ jQuery( document ).ready(function($) {
 									data: flds,
 									success: function(response) {
 										// remove our extra details
-										FancyProductDesigner.prototype.removeElement('PDF Label');
-										FancyProductDesigner.prototype.removeElement('PDF Label Back');
-										FancyProductDesigner.prototype.removeElement('Watermark');
+										fancyProductDesigner.removeElement('PDF Label');
+										fancyProductDesigner.removeElement('PDF Label Back');
+										fancyProductDesigner.removeElement('Watermark');
 										// reset printArea
 										if (typeof(printableArea) != 'undefined') {
 											printableArea.opacity = 1;
@@ -1573,7 +1298,7 @@ jQuery( document ).ready(function($) {
 	}
 
 	// Function to list Javascript object methods
-	// Example use: console.log(getMethods(FancyProductDesigner.prototype));
+	// Example use: console.log(getMethods(fancyProductDesigner));
 	// Fancy Product Designer methods and events are described in detail at;
 	// http://jsdoc.fancyproductdesigner.com/FancyProductDesigner.html
 	function getMethods(obj) {
