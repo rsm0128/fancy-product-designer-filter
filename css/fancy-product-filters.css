@@ -54,7 +54,7 @@
 	margin-left: 5px;
 	padding: 2px;
 }
-.fpd-context-dialog, .sp-container {
+.fpd-context-dialog {
 	position: fixed !important;
 }
 .mCSB_dragger_bar {

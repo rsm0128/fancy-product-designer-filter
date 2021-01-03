@@ -2,17 +2,20 @@
 
 jQuery.migrateMute = 1;
 jQuery( document ).ready(function($) {
-	var elemType, dimensionLabel, activeElement, modal_top, modal_left, printableArea
+	var printableArea
 	var masks = {};
 
-	var fpe_loaded = 0;
-	var fpf_loaded = 0;
+	var fpf_loaded = false;
 
 	let fpd_container = $('.fpd-product-designer-wrapper > .fpd-container');
 	fpd_container.on('ready', function(evt) {
+		fpf_init_note();
 		fpf_init_custom_filter(); // Defines custom fabric filter
 		fpf_init_quote_form();
 		fpf_init_watermark_hack();
+
+		// Disable GL filter
+		fabric.enableGLFiltering = false;
 	});
 
 	function fpf_init_watermark_hack() {
@@ -30,6 +33,51 @@ jQuery( document ).ready(function($) {
 		return fancyProductDesigner.currentViewInstance.stage;
 	}
 
+	function fpf_init_note() {
+
+		if (fpfCommonParams.show_messages == true) {
+			// Create HTML for message under Scale tool
+			var scaleHTML = '<div class="fpf-transform-options fpd-transform-options fpd-list-row fpd-sub-option">';
+			scaleHTML = scaleHTML + '<div class="fpf-cell-wide">';
+			scaleHTML = scaleHTML + fpfCommonParams.scale_message;
+			scaleHTML = scaleHTML + '</div>';
+			scaleHTML = scaleHTML + '</div>';
+
+			// Append our custom Scale HTML right before the helper buttons - this should be below the scale tool
+			$('.fpd-helper-btns').before(scaleHTML);
+
+			// Create HTML for message under Scale tool
+			var uploadHTML = '<div class="fpf-upload-options">';
+			uploadHTML = uploadHTML + '<div class="fpf-cell-wide">';
+			uploadHTML = uploadHTML + fpfCommonParams.upload_message;
+			uploadHTML = uploadHTML + '</div>';
+			uploadHTML = uploadHTML + '</div>';
+
+			// Append our custom Upload HTML right before the upload form - this should be below all upload options
+			$('.fpd-upload-form').before(uploadHTML);
+			// Put our ScaleHTML in a new div so it has the right padding for the upload form
+			scaleHTML = '<div class="fpf-upload-scale">' + scaleHTML + '</div>';
+			// Append our scaling message right under the Upload HTML
+			$('.fpd-upload-form').before(scaleHTML);
+
+			// Add text to helper buttons
+			$('.fpd-center-horizontal').css('display', 'block');
+			$('.fpd-center-horizontal').append('<div class="fpf-helper-btn-label">' + fpfCommonParams.helperCenterHorizontal + '</div>');
+			$('.fpd-center-vertical').css('display', 'block');
+			$('.fpd-center-vertical').append('<div class="fpf-helper-btn-label">' + fpfCommonParams.helperCenterVertical + '</div>');
+			$('.fpd-flip-horizontal').css('display', 'block');
+			$('.fpd-flip-horizontal').append('<div class="fpf-helper-btn-label">' + fpfCommonParams.helperFlipHorizontal + '</div>');
+			$('.fpd-flip-vertical').css('display', 'block');
+			$('.fpd-flip-vertical').append('<div class="fpf-helper-btn-label">' + fpfCommonParams.helperFlipVertical + '</div>');
+			$('.fpd-reset-element').css('display', 'block');
+			$('.fpd-reset-element').append('<div class="fpf-helper-btn-label">' + fpfCommonParams.helperResetElement + '</div>');
+
+			var action_label = fpfCommonParams.action_label;
+			$('.fpd-right .fpd-icon-more').after('<span class="fpf_action_label">' + action_label + '</span>');
+
+		}
+	}
+
 	function fpf_init_custom_filter() {
 		// Defind custom fabric mask filter
 		fabric.Image.filters.Mask = fabric.util.createClass(fabric.Image.filters.BaseFilter, {
@@ -40,24 +88,24 @@ jQuery( document ).ready(function($) {
 		  	},
 			applyTo2d: function(options) {
 				if(!this.mask) return;
-				var maskEl = this.mask._originalElement,
-					maskCanvasEl = fabric.util.createCanvasElement(),
-					channel = this.channel,
-					imageData = options.imageData,
-					data = imageData.data,
-					iLen = data.length,
-					i;
+				let maskImage = this.mask._originalElement;
+				let maskCanvas = fabric.util.createCanvasElement();
+				let channel = this.channel;
+				let userImageData = options.imageData;
 
-				maskCanvasEl.width = maskEl.width = imageData.width;
-				maskCanvasEl.height = maskEl.height = imageData.height;
+				// Init mask image and canvas size
+				maskCanvas.width = maskImage.width = userImageData.width;
+				maskCanvas.height = maskImage.height = userImageData.height;
+				// maskImage.crossOrigin = "Anonymous"
 
-				maskCanvasEl.getContext('2d').drawImage(maskEl, 0, 0, maskEl.width, maskEl.height);
-				var maskImageData = maskCanvasEl.getContext('2d').getImageData(0, 0, maskEl.width, maskEl.height),
-
-				maskData = maskImageData.data;
+				maskCanvas.getContext('2d').drawImage(maskImage, 0, 0, maskImage.width, maskImage.height);
+				let maskImageData = maskCanvas.getContext('2d').getImageData(0, 0, maskImage.width, maskImage.height);
 				maskImageData.crossOrigin = "Anonymous";
 
-				for ( i = 0; i < iLen * 4; i += 4 ) {
+				let maskData = maskImageData.data;
+				let data = userImageData.data;
+				let iLen = data.length;
+				for ( let i = 0; i < iLen * 4; i += 4 ) {
 					if (data[ i + 3 ] == 0) {
 						data[ i + 3 ] = 0;
 					} else {
@@ -72,9 +120,25 @@ jQuery( document ).ready(function($) {
 			}
 		});
 
+		// Override default getFilter function to inject custom filter
+
+		// Get our textures
+		var textures_obj = $.parseJSON(fpfCommonParams.textures);
+		let orgGetFilter = FPDUtil.getFilter;
+		FPDUtil.getFilter = function (type, opts) {
+			// Apply the default getFilter function
+			let filter = orgGetFilter.apply(null, [type, opts]);
+
+			// Adds custom filter if matched
+			if (null === filter && (type in textures_obj)) {
+				filter = new fabric.Image.filters.Mask({ mask: masks[type] });
+			}
+			return filter;
+		}
+
 		// Adds Filter when clicking advanced editing
 		$(document).on('click', '.fpd-tool-advanced-editing', function() {
-			// Checks if previously added
+
 			if (!$('.fpf-filters').length) {
 
 				// Hide original filters
@@ -90,8 +154,6 @@ jQuery( document ).ready(function($) {
 					newFilterBtns = newFilterBtns + '</div>';
 				newFilterBtns = newFilterBtns + '</div>';
 
-				// Get our textures
-				var textures_obj  = $.parseJSON( fpfCommonParams.textures );
 				var btn_count = 1;
 
 				// Create our custom button html for each texture
@@ -108,69 +170,11 @@ jQuery( document ).ready(function($) {
 					// Prepare mask
 					new fabric.Image.fromURL( texture_values['texture'] , function( img ){
 						masks[texture_name] = img;
-					} );
+					}, { crossOrigin: 'Anonymous'} );
 				});
 
 				// Append our custom button HTML to the grid with the other filters
 				$('.fpd-content-filters').append(newFilterBtns);
-				
-				if(fpfCommonParams.show_messages == true) {
-					// Create HTML for message under Scale tool
-					var scaleHTML = '<div class="fpf-transform-options fpd-transform-options fpd-list-row fpd-sub-option">';
-						scaleHTML = scaleHTML + '<div class="fpf-cell-wide">';
-							scaleHTML = scaleHTML + fpfCommonParams.scale_message;
-						scaleHTML = scaleHTML + '</div>';
-					scaleHTML = scaleHTML + '</div>';
-					
-					// Append our custom Scale HTML right before the helper buttons - this should be below the scale tool
-					$('.fpd-helper-btns').before(scaleHTML);
-
-					// Create HTML for message under Scale tool
-					var uploadHTML = '<div class="fpf-upload-options">';
-						uploadHTML = uploadHTML + '<div class="fpf-cell-wide">';
-							uploadHTML = uploadHTML + fpfCommonParams.upload_message;
-						uploadHTML = uploadHTML + '</div>';
-					uploadHTML = uploadHTML + '</div>';
-					
-					// Append our custom Upload HTML right before the upload form - this should be below all upload options
-					$('.fpd-upload-form').before(uploadHTML);
-					// Put our ScaleHTML in a new div so it has the right padding for the upload form
-					scaleHTML = '<div class="fpf-upload-scale">'+scaleHTML+'</div>';
-					// Append our scaling message right under the Upload HTML
-					$('.fpd-upload-form').before(scaleHTML);
-
-					// Add text to helper buttons
-					$('.fpd-center-horizontal').css('display', 'block');
-					$('.fpd-center-horizontal').append('<div class="fpf-helper-btn-label">'+fpfCommonParams.helperCenterHorizontal+'</div>');
-					$('.fpd-center-vertical').css('display', 'block');
-					$('.fpd-center-vertical').append('<div class="fpf-helper-btn-label">'+fpfCommonParams.helperCenterVertical+'</div>');
-					$('.fpd-flip-horizontal').css('display', 'block');
-					$('.fpd-flip-horizontal').append('<div class="fpf-helper-btn-label">'+fpfCommonParams.helperFlipHorizontal+'</div>');
-					$('.fpd-flip-vertical').css('display', 'block');
-					$('.fpd-flip-vertical').append('<div class="fpf-helper-btn-label">'+fpfCommonParams.helperFlipVertical+'</div>');
-					$('.fpd-reset-element').css('display', 'block');
-					$('.fpd-reset-element').append('<div class="fpf-helper-btn-label">'+fpfCommonParams.helperResetElement+'</div>');
-
-					var action_label = fpfCommonParams.action_label;
-					$('.fpd-right .fpd-icon-more').after('<span class="fpf_action_label">'+action_label+'</span>');
-
-				}
-
-				// Disable GL filter
-				fabric.enableGLFiltering = false;
-
-				// Override default getFilter function to inject custom filter
-				let orgGetFilter = FPDUtil.getFilter;
-				FPDUtil.getFilter = function(type, opts) {
-					// Apply the default getFilter function
-					let filter = orgGetFilter.apply(null, [type, opts]);
-
-					// Adds custom filter if matched
-					if (null === filter && (type in textures_obj)) {
-						filter = new fabric.Image.filters.Mask({mask: masks[type]});
-					}
-					return filter;
-				}
 			}
 		});
 
