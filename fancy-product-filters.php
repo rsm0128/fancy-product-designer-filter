@@ -147,8 +147,8 @@ function fpf_enqueue_scripts() {
 			$is_admin = true;
 		}
 	}
-	wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.3.0', true );
-	// wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), wp_rand(), true );
+	// wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.3.0', true );
+	wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), wp_rand(), true );
 	if (strpos($settings['modal_top'], 'px') !== false) {
 		$pixel_or_percent = 'px';
 		$color_adjust_top = 153;

@@ -175,6 +175,15 @@ jQuery( document ).ready(function($) {
 
 				// Append our custom button HTML to the grid with the other filters
 				$('.fpd-content-filters').append(newFilterBtns);
+
+				// Adds custom css block to head
+				// Change the canvas background color of image editor
+				let color = fancyProductDesigner.currentViewInstance.getElementByTitle('Garment Color').fill;
+				if ($('.filter-style').length == 0) {
+					$('head').append('<style type="text/css" class="filter-style"></style>');
+				}
+				$('.filter-style').html(".fpd-image-editor-main:before {background: " + color + ";}");
+
 			}
 		});
 
@@ -408,7 +417,7 @@ jQuery( document ).ready(function($) {
 			var product = fancyProductDesigner.getProduct();
 			flds.product = JSON.stringify(product);
 			flds.action = 'fpf_send_quote';
-			fpf_add_watermark();
+			// fpf_add_watermark();
 			fpf_add_product_details();
 			if (typeof(printableArea) != 'undefined') {
 				printableArea.opacity = 0;
