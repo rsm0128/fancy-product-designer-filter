@@ -2,10 +2,11 @@
 
 jQuery.migrateMute = 1;
 jQuery( document ).ready(function($) {
-	var printableArea
 	var masks = {};
 
 	var fpf_loaded = false;
+	let fpf_current_element;
+	let customFilters;
 
 	let fpd_container = $('.fpd-product-designer-wrapper > .fpd-container');
 	fpd_container.on('ready', function(evt) {
@@ -28,11 +29,7 @@ jQuery( document ).ready(function($) {
 		}
 	}
 
-	// Helper function to get current stage of designer
-	function getCurrentStage() {
-		return fancyProductDesigner.currentViewInstance.stage;
-	}
-
+	// Function to add notes to image upload form
 	function fpf_init_note() {
 
 		if (fpfCommonParams.show_messages == true) {
@@ -136,9 +133,24 @@ jQuery( document ).ready(function($) {
 			return filter;
 		}
 
-		// Adds Filter when clicking advanced editing
-		$(document).on('click', '.fpd-tool-advanced-editing', function() {
+		// Store current element to local variable
+		$('.fpd-container').on('elementSelect', function(evt, object) {
+			if (null != object) {
+				fpf_current_element = object;
+			}
+		});
 
+		// Image advanced editing handler. Adds filters and ...
+		$(document).on('click', '.fpd-tool-advanced-editing', function() {
+			// Init filter data
+			if (typeof(fpf_current_element.customFilters) == 'undefined') {
+				fpf_current_element.customFilters = [];
+			}
+
+			let customFilters = [...fpf_current_element.customFilters];
+			let newFilter = '';
+
+			// Adds Filter when clicking advanced editing
 			if (!$('.fpf-filters').length) {
 
 				// Hide original filters
@@ -183,214 +195,191 @@ jQuery( document ).ready(function($) {
 					$('head').append('<style type="text/css" class="filter-style"></style>');
 				}
 				$('.filter-style').html(".fpd-image-editor-main:before {background: " + color + ";}");
-
 			}
+
+			// Filter click action handler. Addes active class to active filter
+			$('.fpd-image-editor-container').on('click', '.fpd-content-filters > div', function() {
+				$(this).siblings().removeClass('active');
+				$(this).addClass('active');
+				newFilter = $(this).data('type');
+			});
+
+			// Save filter handler
+			// save the data to customFilter value
+			$('.fpd-image-editor-container').on('click', '.fpd-action-save', function(){
+				if (newFilter) {
+					customFilters.push(newFilter);
+				}
+				fpf_current_element.customFilters = customFilters;
+			});
+
+			// Restore original handler
+			// reset the custom filter value to original
+			$('.fpd-image-editor-container').on('click', '.fpd-action-restore', function(){
+				customFilters = [];
+			});
+
 		});
 
-		$(document).on('click', '.fpd-content-filters > div', function() {
-			$(this).siblings().removeClass('active');
-			$(this).addClass('active');
-		});
 	}
 
 	// fpf_add_product_details()
 	function fpf_add_product_details() {
-		var my_stage = getCurrentStage();
-		var title = fpfCommonParams.title;
-		var obj_width, obj_height, color_obj, color_obj2, color_obj3, color_obj4, color_obj5, color_obj6, file, dimensions, color, color2, color3, color4, color5, color6, filterTitle, object_scale, object_new_height, object_new_width;
-		var fileText = '';
-		var fileTextBack = '';
-		var object_dpi = fpfCommonParams.dpi;
-		var customItems = [];
+		let fileTextFront = '';
+		let fileTextBack = '';
+		let objColors = {}; // Color title and value pair object.
 
-		// Loop stage objects and get info on each custom item and the color layer
-		var stageObjects = my_stage.getObjects();
-		$.each(stageObjects, function(i, v) {
-			// Get the Dimensions obj
-			if (stageObjects[i].title == fpfCommonParams.colorLayerTitle ) {
-				color_obj = stageObjects[i];
-			}
-			if (stageObjects[i].title == 'Body Color' ) {
-				color_obj2 = stageObjects[i];
-			}
-			if (stageObjects[i].title == 'Liner Color' ) {
-				color_obj3 = stageObjects[i];
-			}
-			if (stageObjects[i].title == 'Cord Color' ) {
-				color_obj4 = stageObjects[i];
-			}
-			if (stageObjects[i].title == 'Zipper Color' ) {
-				color_obj5 = stageObjects[i];
-			}
-			if (stageObjects[i].title == 'Sleeve Color' ) {
-				color_obj6 = stageObjects[i];
-			}
-			if (stageObjects[i].params['isCustom'] == true) {
-				if (typeof(customItems[stageObjects[i].title]) == 'undefined') {
-					customItems[stageObjects[i].title] = [];
+		// Get all the objects
+		let colorTitleArray = [fpfCommonParams.colorLayerTitle, 'Body Color', 'Liner Color', 'Cord Color', 'Zipper Color', 'Sleeve Color']; // All color titles used in goldengoodsusa.com
+
+		// Get the color and custom filter attributes
+		// Mutate objColors, fileTextFront, fileTextBack
+		let object_dpi = fpfCommonParams.dpi;
+		let viCount = fancyProductDesigner.viewInstances.length; // View Instance count
+		for (let viIndex = 0; viIndex < viCount; viIndex++) {
+			let viTitle = fancyProductDesigner.viewInstances[viIndex].title; // Title of i-th View Instance. Front or Back
+			let viObjArray = fancyProductDesigner.getElements(viIndex); // All objects in i-th View Instance.
+			for ( obj of viObjArray ) {
+				// If it's a color object adds a color title&value pair
+				if (colorTitleArray.includes(obj.title)) {
+					objColors[obj.title] = obj.fill;
 				}
-				if (typeof(stageObjects[i].params.customFilterTitle) != 'undefined') {
-					customItems[stageObjects[i].title]['filter'] = stageObjects[i].params.customFilterTitle;
-				} else {
-					customItems[stageObjects[i].title]['filter'] = 'No Filter added';
+
+				// If custom object
+				if (obj.isCustom == true) {
+					let real_width = (obj.width * obj.scale)/object_dpi;
+					let real_height = (obj.height * obj.scale)/object_dpi;
+
+					let filterText = ' \n ';
+					filterText = filterText + ' File: ' + obj.title + ' \n ';
+					filterText = filterText + ' Dimensions: ' + ' Height: ' + real_height.toPrecision(2) + '" Width: ' + real_width.toPrecision(2) + '" \n ';
+					filterText = filterText + ' Filter: ' + ((obj.customFilters) ? obj.customFilters.join(',') : '') + ' \n ';
+
+					if (viIndex == 0) {
+						fileTextFront += filterText;
+					} else {
+						fileTextBack += filterText;
+					}
 				}
-				object_height = stageObjects[i].params['y'];
-				object_width = stageObjects[i].params['x'];
-				object_scale = stageObjects[i].params['scale'];
-				object_new_height = (stageObjects[i].height*object_scale)/object_dpi;
-				object_new_width = (stageObjects[i].width*object_scale)/object_dpi;
-				customItems[stageObjects[i].title]['dimensions'] = ' Height: ' + object_new_height.toPrecision(2) + '" Width: ' + object_new_width.toPrecision(2) + '" ';
-				if (stageObjects[i].viewIndex == 0) {
-					fileText = fileText + ' \n ';
-					fileText = fileText + ' File: ' + stageObjects[i].title + ' \n ';
-					fileText = fileText + ' Dimensions: ' + customItems[stageObjects[i].title]['dimensions'] + ' \n ';
-					fileText = fileText + ' Filter: ' + customItems[stageObjects[i].title]['filter'] + ' \n ';
-				} else {
-					fileTextBack = fileTextBack + ' \n ';
-					fileTextBack = fileTextBack + ' File: ' + stageObjects[i].title + ' \n ';
-					fileTextBack = fileTextBack + ' Dimensions: ' + customItems[stageObjects[i].title]['dimensions'] + ' \n ';
-					fileTextBack = fileTextBack + ' Filter: ' + customItems[stageObjects[i].title]['filter'] + ' \n ';
-				}
+
 			}
-		});
+		}
+
+		// Prepare colorText
+		let colorText = '';
+		for (colorTitle of colorTitleArray) {
+			if (objColors[colorTitle]) {
+				colorText += colorTitle + ': ' + objColors[colorTitle] + ' \n';
+			}
+		}
+
+		let title = fpfCommonParams.title;
+		let font_size = fpfCommonParams.fontSize - 4;
 		
-		if (undefined !=color_obj) {
-			color = 'Garment Color: ' + color_obj.params.currentColor;
-		} else {
-			color = '';
-		}
-		if (undefined !=color_obj2) {
-			//console.log('we have a body color');
-			color2 = 'Body Color: ' + color_obj2.params.currentColor;
-		} else {
-			color2 = '';
-		}
-		if (undefined !=color_obj3) {
-			color3 = 'Liner Color: ' + color_obj3.params.currentColor;
-		} else {
-			color3 = '';
-		}
-		if (undefined !=color_obj4) {
-			color4 = 'Cord Color: ' + color_obj4.params.currentColor;
-		} else {
-			color4 = '';
-		}
-		if (undefined !=color_obj5) {
-			color5 = 'Zipper Color: ' + color_obj5.params.currentColor;
-		} else {
-			color5 = '';
-		}
-		if (undefined !=color_obj6) {
-			//console.log('we have a sleeve color');
-			color6 = 'Sleeve Color: ' + color_obj6.params.currentColor;
-		} else {
-			color6 = '';
-		}
-		
-		
-		
-		var PDFtext = ' ' + title + ' \n ';
-		PDFtext = PDFtext + color + ' \n ';
-		if (color2){PDFtext = PDFtext + color2 + ' \n ';}
-		if (color3){PDFtext = PDFtext + color3 + ' \n ';}
-		if (color4){PDFtext = PDFtext + color4 + ' \n ';}
-		if (color5){PDFtext = PDFtext + color5 + ' \n ';}
-		if (color6){PDFtext = PDFtext + color6 + ' \n ';}
-		PDFtext = PDFtext + fileText + ' \n ';
+		let PdfTextFront = ' ' + title + ' \n ';
+		PdfTextFront += colorText;
+		PdfTextFront += fileTextFront + ' \n ';
+
 		// Build label parameters
-		var font_size = fpfCommonParams.fontSize;
-		var newParams = [];
-		newParams['title'] = 'PDF Label';
-		newParams['x'] = 5;
-		newParams['y'] = 5;
-		newParams['isCustom'] = false;
-		newParams['selectable'] = false;
-		newParams['filter'] = false;
-		newParams['scale'] = 1;
-		var PDFLabel = new fabric.Text(PDFtext, {
+		let x = 5;
+		let y = 5;
+		let PDFLabelFront = new fabric.Text(PdfTextFront, {
 			id: String(new Date().getTime()),
-			text: PDFtext,
+			text: PdfTextFront,
 			textBackgroundColor: 'rgb(255,255,255)',
 			fill: '#000000', //a78f60
 			fontFamily: 'Futura',
-			fontSize: (font_size-4),
-			top: newParams['y'],
-			left: newParams['x'],
+			fontSize: font_size,
+			top: y,
+			left: x,
 			scale: 1,
 			scaleX: 1,
 			scaleY: 1,
-			selectable: newParams['selectable'],
-			title: newParams['title'],
+			selectable: false,
+			title: 'PDF Label',
 			visible: true,
 			viewIndex: 0,
-			params: newParams
 		});
 		// Add the PDF text label
-		my_stage.add(PDFLabel);
-		PDFLabel.setTop(newParams['y']);
-		PDFLabel.setLeft(newParams['x']);
+		let my_stage = fancyProductDesigner.viewInstances[0].stage;
+		my_stage.add(PDFLabelFront);
+		// PDFLabelFront.setTop(y);
+		// PDFLabelFront.setLeft(x);
 		
-		// Build Back Label
-		var PDFtextBack = ' ' + title + ' \n ';
-		PDFtextBack = PDFtextBack + color + ' \n ';
-		if (color2){PDFtext = PDFtext + color2 + ' \n ';}
-		if (color3){PDFtext = PDFtext + color3 + ' \n ';}
-		if (color4){PDFtext = PDFtext + color4 + ' \n ';}
-		if (color5){PDFtext = PDFtext + color5 + ' \n ';}
-		if (color6){PDFtext = PDFtext + color6 + ' \n ';}
-		PDFtextBack = PDFtextBack + fileTextBack + ' \n ';
-		// Build label parameters
-		var font_size = fpfCommonParams.fontSize;
-		var backParams = [];
-		backParams['title'] = 'PDF Label Back';
-		backParams['x'] = 5;
-		backParams['y'] = 5;
-		backParams['isCustom'] = false;
-		backParams['selectable'] = false;
-		backParams['filter'] = false;
-		backParams['scale'] = 1;
-		var PDFLabel = new fabric.Text(PDFtextBack, {
-			id: String(new Date().getTime()),
-			text: PDFtextBack,
-			textBackgroundColor: 'rgb(255,255,255)',
-			fill: '#000000', //a78f60
-			fontFamily: 'Futura',
-			fontSize: (font_size-4),
-			top: backParams['y'],
-			left: backParams['x'],
-			scale: 1,
-			scaleX: 1,
-			scaleY: 1,
-			selectable: backParams['selectable'],
-			title: backParams['title'],
-			visible: true,
-			viewIndex: 1,
-			params: backParams
-		});
-		// Add the PDF text label
-		my_stage.add(PDFLabel);
-		PDFLabel.setTop(backParams['y']);
-		PDFLabel.setLeft(backParams['x']);
-		
+		if ( fancyProductDesigner.viewInstances.length >= 2 ) {
+			// Build Back Label
+			let PdfTextBack = ' ' + title + ' \n ';
+			PdfTextBack += colorText;
+			PdfTextBack += fileTextBack + ' \n ';
+
+			var PDFLabelBack = new fabric.Text(PdfTextBack, {
+				id: String(new Date().getTime()),
+				text: PdfTextBack,
+				textBackgroundColor: 'rgb(255,255,255)',
+				fill: '#000000', //a78f60
+				fontFamily: 'Futura',
+				fontSize: font_size,
+				top: y,
+				left: x,
+				scale: 1,
+				scaleX: 1,
+				scaleY: 1,
+				selectable: false,
+				title: 'PDF Label Back',
+				visible: true,
+				viewIndex: 1,
+			});
+			// Add the PDF text label
+			my_stage = fancyProductDesigner.viewInstances[1].stage
+			my_stage.add(PDFLabelBack);
+			// PDFLabelBack.setTop(backParams['y']);
+			// PDFLabelBack.setLeft(backParams['x']);
+		}
+			
 		// Render Changes
 		my_stage.renderAll();
 		my_stage.calcOffset();
 	}
 
+	function fpf_add_watermark() {
+		let my_stage = fancyProductDesigner.viewInstances[0].stage;
+		// Define watermark
+		var watermark = fpfCommonParams.watermark_url;
+		// Add Watermark
+		var waterParams = [];
+		waterParams['title'] = 'Watermark';
+		waterParams['isCustom'] = false;
+		waterParams['selectable'] = false;
+		waterParams['filter'] = false;
+		waterParams['scale'] = 1;
+		var h = fpfCommonParams.watermark_height;
+		var w = fpfCommonParams.watermark_width;
+		waterParams['x'] = my_stage.width-parseInt(w)+parseInt(fpfCommonParams.water_mark_left);
+		waterParams['y'] = 0+parseInt(h)+parseInt(fpfCommonParams.water_mark_top);
+		waterParams['opacity'] = fpfCommonParams.watermark_opacity
+
+		for (let vi of fancyProductDesigner.viewInstances) {
+			vi.addElement('image', watermark, 'Watermark', waterParams, 0);
+		}
+	}
+
 	// fpf_send_quote()
 	function fpf_send_quote() {
 		var quote_form = $('[name="fpd_shortcode_form"]');
-		var fld_name = '';
-		var flds = {};
+		var flds = {}; // form data object
 		var validate = 0;
 		$('[name="fpd_shortcode_form"] [name]').each(function(index, element) {
 			if (typeof($(element).attr('name')) != 'undefined') {
 				//data = data + ',' + $(element).attr('name') + ':' + $(element).val();
-				fld_name = $(element).attr('name');
-				fld_value = $(element).val();
+				let fld_name = $(element).attr('name');
+				let fld_value = $(element).val();
+
+				// Empty fields except name, email and title
 				if (fld_name != 'fpd_shortcode_form_name' && fld_name != 'fpd_shortcode_form_email' && fld_name !='project_title') {
 					$(element).val('');
 				}
+
+				// Quantity value validator
 				if(fld_name == 'quantity_field'){
 					if(fld_value > 149){
 						validate = validate + 1;
@@ -400,6 +389,8 @@ jQuery( document ).ready(function($) {
 						var errorMSG = 'Please enter a number of 150 or greater in the quantity field';
 					}
 				}
+
+				// Required check
 				if (fld_name == 'fpd_shortcode_form_name' || fld_name == 'fpd_shortcode_form_email' || fld_name == 'date_need_by') {
 					if (fld_value != '') {
 						validate = validate + 1;
@@ -410,6 +401,8 @@ jQuery( document ).ready(function($) {
 				flds[fld_name] = fld_value; 
 			}
 		});
+
+		// If all fields are valid
 		if (validate == 4) {
 			$('.fpd-full-loader').addClass('fpf_show');
 			$('[name="fpd_shortcode_form"]').slideUp();
@@ -417,11 +410,9 @@ jQuery( document ).ready(function($) {
 			var product = fancyProductDesigner.getProduct();
 			flds.product = JSON.stringify(product);
 			flds.action = 'fpf_send_quote';
-			// fpf_add_watermark();
+			fpf_add_watermark();
 			fpf_add_product_details();
-			if (typeof(printableArea) != 'undefined') {
-				printableArea.opacity = 0;
-			}
+
 			setTimeout(function(){ 
 				// Create temp canvas, add image as jpeg, reduce size and send to server
 				var img = document.createElement("img");
@@ -431,8 +422,11 @@ jQuery( document ).ready(function($) {
 				var ctx = canvas.getContext("2d");
 
 				// Get a list of current views
-				var viewsDataURL = fancyProductDesigner.getViewsDataURL(),
-					images = new Array(),
+				var viewsDataURL;
+				fancyProductDesigner.getViewsDataURL(function(dataURLs){
+					viewsDataURL = dataURLs;
+				});
+				var images = new Array(),
 					imageLoop = 0;
 
 					// load the front image
@@ -445,7 +439,6 @@ jQuery( document ).ready(function($) {
 						img.crossOrigin = "Anonymous";
 						// load the back image
 						var img2 = new Image();
-						img2.crossOrigin = "Anonymous";
 						img2.crossOrigin = "Anonymous";
 						img2.src = viewsDataURL[1];
 						img2.onload = function() {
@@ -463,19 +456,23 @@ jQuery( document ).ready(function($) {
 									data: flds,
 									success: function(response) {
 										// remove our extra details
-										fancyProductDesigner.removeElement('PDF Label');
-										fancyProductDesigner.removeElement('PDF Label Back');
-										fancyProductDesigner.removeElement('Watermark');
-										// reset printArea
-										if (typeof(printableArea) != 'undefined') {
-											printableArea.opacity = 1;
+										if ( fancyProductDesigner.viewInstances[0] ) {
+											fancyProductDesigner.viewInstances[0].removeElement('PDF Label');
+											fancyProductDesigner.viewInstances[0].removeElement('Watermark');
 										}
-										$('.sending_quote').html('<div class="quote_received">'+fpfCommonParams.quote_sent_message+'</div>');
-										$('.fpd-full-loader').removeClass('fpf_show');
+										if ( fancyProductDesigner.viewInstances[1] ) {
+											fancyProductDesigner.viewInstances[1].removeElement('PDF Label Back');
+											fancyProductDesigner.viewInstances[1].removeElement('Watermark');
+										}
+
+										$('.sending_quote').html('<div class="quote_received">'+fpfCommonParams.quote_sent_message+'</div>'); // Show the success message
+										$('.fpd-full-loader').removeClass('fpf_show'); // Remove the loader
+
 										setTimeout(function(){
-											$('.sending_quote').remove();
-											$('[name="fpd_shortcode_form"]').slideDown();
-										}, 5000);
+											$('.quote-modal-close').click(); // Close the modal
+											$('.sending_quote').remove(); // Remove the success message
+											$('[name="fpd_shortcode_form"]').slideDown(); // Show form again
+										}, 1000);
 									},
 									error: function(error) {
 										$('.sending_quote').html('<div class="quote_received">An error occurred - your quote was not sent.</div>');
@@ -495,80 +492,65 @@ jQuery( document ).ready(function($) {
 		}
 	}
 
-	// Init price quote form
 	function fpf_init_quote_form() {
-		// Is there a quote form on the page?
-		if (typeof($('form[name="fpd_shortcode_form"]')) != 'undefined') {
-			if ($('form[name="fpd_shortcode_form"]').attr('name') == 'fpd_shortcode_form') {
-				// Create new fields to add to form
-				if (acf_product_stylenumber && acf_product_title) {
-					var page_title = '<p class="h2 text-gold style-num margin-bottom-0">'+acf_product_stylenumber+'</p><h1 class="h2 normalcase product-name">'+acf_product_title+'</h1>'
-				}
-				else {
-					var page_title = fpfCommonParams.title;
-				}
-				
-				$('form[name="fpd_shortcode_form"]').prepend('<div class="fpf_quote_title">'+page_title+'</div><p style="text-align:center;">want to see a different item?<br><a class="button small" href="/our-products/">See More Bodystyles</a></p><div class="fpf_step_three">Step 4: Request a Quote</div>');
-				var form_input = $('.fpd-shortcode-form-text-input:nth-of-type(2)');
-				
-				var project_title = '<label>'+fpfCommonParams.project_title_placeholder+'</label><input type="text" name="project_title" class="fpd-shortcode-form-text-input project_title" />';
-				$('.fpf_step_three').after(project_title);
-				var quantity_field = '<label>'+fpfCommonParams.quantity_placeholder+'<span class="required">*</span></label><input type="text" name="quantity_field" class="fpd-shortcode-form-text-input quantity_field" />';
-				var date_need_by = '<label>'+fpfCommonParams.date_needed_by_placeholder+'<span class="required">*</span></label><input type="text" name="date_need_by" class="fpd-shortcode-form-text-input date_need_by" onfocus="showCalendarControl(this);" />';
-				var comment_field = '<label>'+fpfCommonParams.comments_placeholder+'</label><textarea name="comment_field" class="fpd-shortcode-form-text-input comment_field" />';
-				var code_field = '<label>Promo code (optional)</label><input type="text" name="code_field" class="fpd-shortcode-form-text-input code_field" />';
+		// Add graphic print size guide
+		if ($('.fpd-content').length) {
+			$('.fpd-content').append($('.print-parameters'));
+			$('.print-parameters h5').click(function(){
+				$(this).closest('.print-parameters').toggleClass('active');
+			});
+		}
 
-				var new_btn = '<input type="button" value="Submit" class="fpf-submit-btn button">';
-				var under_quote_message = fpfCommonParams.under_quote_message;
-				// Get rid of the original submit button
-				$('input.fpd-blue-btn').remove();
-				// Replace submit button with regular button
-				form_input.after(new_btn);
-				// Add our additional fields
-				form_input.after(comment_field);
-				// Add under quote message
-				form_input.after('<span class="under_quote_message">'+under_quote_message+'</span>');
+		// Add step4 request quote button
+		$('.fpd-navigation').append('<span class="request-quote"><span class="fpd-nav-icon fpd-icon-share-mail"></span><span class="fpd-label">Step 4: Request a Quote</span></span>');
 
-				form_input.after(date_need_by);
-				form_input.after(code_field);
-				form_input.after(quantity_field);
-
-				// add labels and remove placeholders for the two original fields; name & email
-				var your_name = $('[name="fpd_shortcode_form_name"]');
-				$(your_name).before('<label>'+fpfCommonParams.name_placeholder+'<span class="required">*</span></label>');
-				$(your_name).attr("placeholder", "");
-				
-				var your_email = $('[name="fpd_shortcode_form_email"]');
-				$(your_email).before('<label>'+fpfCommonParams.email_placeholder+'<span class="required">*</span></label>');
-				$(your_email).attr("placeholder", "");
-
-				// Add bottom quote message
-				var bottom_quote_message = fpfCommonParams.bottom_quote_message;
-				$('input[type="button"].button').after('<div class="bottom_quote_message">'+bottom_quote_message+'<br><br><p>Need help? email us at <a href="mailto:info@goldengoodsusa.com">info@goldengoodsusa.com</a></p></div><div class="print-parameters"><table cellpadding="4" style="text-align:center; text-transform:uppercase;"><th>Graphic Print Size Guide</th><tr><td><h3>Standard Size</h3><h4>16" Wide X 18" Tall</h4></td></tr><tr><td><h3>Jumbo Size</h3><h4>19" Wide X 24" Tall</h4></td></tr><tr><td><h3>All Over Size</h3><h4>44" Wide X 36" Tall</h4></td></tr><tr><td><h3>Youth Size</h3><h4>12" Wide X 18" Tall</h4></td></tr><tr><td><h3>Infant Size</h3><h4>8" Wide X 10" Tall</h4></td></tr><tr><td><h3>Short Sleeve</h3><h4>4" Wide X 5" Tall</h4></td></tr><tr><td><h3>Long Sleeve</h3><h4>4" Wide X 15" Tall</h4></td></tr></table></div>');
-
-			}
-		} // end if there is a quote form
-
-		// Quote button clicked
-		$('.fpf-submit-btn').on('click', function() {
-			fpf_send_quote();
+		// Request quote button click handler
+		$('.fpd-product-designer-wrapper').on('click', '.request-quote', function(){
+			// Show the quote modal
+			$('.quote-modal-overlay').addClass('active');
 		});
 
-		// Make sure dimension box is gone when quote is submitted
-		$('.fpd-shortcode-form-text-input').on('change', function () {
-			var my_stage = getCurrentStage();
-			var currentObjects = getCurrentStage().getObjects();
-			var showDimensionsBox
-			var currentViewIndex = currentObjects.length;
-			for(var i=0; i < currentObjects.length; ++i) {
-				if (currentObjects[i]['title'] == 'Show Dimensions') {
-					showDimensionsBox = currentObjects[i];
-					my_stage.remove(showDimensionsBox);
-					my_stage.renderAll();
-					my_stage.calcOffset();
-				}
-			} // end objects loop
-			my_stage.renderAll();
+		// Add shortcode form to quote modal
+		$('.quote-modal-body').append($('form[name="fpd_shortcode_form"]'));
+
+		// Add title field before name field
+		$('[name="fpd_shortcode_form_name"]').before('<label>'+fpfCommonParams.project_title_placeholder+'</label><input type="text" name="project_title" class="fpd-shortcode-form-text-input project_title" />');
+
+		// Add label to name field and hide placeholder
+		$('[name="fpd_shortcode_form_name"]').before('<label>'+fpfCommonParams.name_placeholder+'<span class="required">*</span></label>');
+		$('[name="fpd_shortcode_form_name"]').attr("placeholder", "");
+
+		// Add label to email field and hide placeholder
+		$('[name="fpd_shortcode_form_email"]').before('<label>'+fpfCommonParams.email_placeholder+'<span class="required">*</span></label>');
+		$('[name="fpd_shortcode_form_email"]').attr("placeholder", "");
+
+		// Add quantity, promo_code, date, message and comment field
+		let fieldGroup = '<label>'+fpfCommonParams.quantity_placeholder+'<span class="required">*</span></label><input type="text" name="quantity_field" class="fpd-shortcode-form-text-input quantity_field" />';
+		fieldGroup += '<label>Promo code (optional)</label><input type="text" name="code_field" class="fpd-shortcode-form-text-input code_field" />';
+		fieldGroup += '<label>'+fpfCommonParams.date_needed_by_placeholder+'<span class="required">*</span></label><input type="date" name="date_need_by" class="fpd-shortcode-form-text-input date_need_by"" />';
+		fieldGroup += '<span class="under_quote_message">'+fpfCommonParams.under_quote_message+'</span>';
+		fieldGroup += '<label>'+fpfCommonParams.comments_placeholder+'</label><textarea name="comment_field" class="fpd-shortcode-form-text-input comment_field" />';
+		fieldGroup += '<input type="button" value="Submit" class="fpf-submit-btn button">';
+		fieldGroup += '<div class="bottom_quote_message">' + fpfCommonParams.bottom_quote_message + '<br><br><p>Need help? email us at <a href="mailto:info@goldengoodsusa.com">info@goldengoodsusa.com</a></p></div>';
+		$('[name="fpd_shortcode_form_email"]').after(fieldGroup);
+
+		// Get rid of the original submit button
+		$('input.fpd-blue-btn').remove();
+
+		// Hide the quote form if overlay clicked
+		$('.quote-modal-overlay').click(function(e){
+			if(e.target != this) return;
+			$(this).removeClass('active');
+		});
+
+		// Quote form close button handler
+		$('.quote-modal-close').click(function(){
+			$('.quote-modal-overlay').removeClass('active');
+		});
+
+		// Send quote button click handler
+		$('.fpf-submit-btn').on('click', function() {
+			fpf_send_quote();
 		});
 	}
 

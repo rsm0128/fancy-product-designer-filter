@@ -148,7 +148,7 @@ function fpf_enqueue_scripts() {
 		}
 	}
 	// wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.3.0', true );
-	wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), wp_rand(), true );
+	wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.0', true );
 	if (strpos($settings['modal_top'], 'px') !== false) {
 		$pixel_or_percent = 'px';
 		$color_adjust_top = 153;
@@ -224,26 +224,7 @@ function fpf_enqueue_scripts() {
 		'title' => $title
 	));
 	wp_enqueue_script( 'fpf-js' );
-	wp_register_script("fpf-calendar-js", plugins_url().'/fancy-product-filters/js/CalendarPopup.js' );
-	wp_localize_script( 'fpf-calendar-js', 'cdCalendarParams', array(
-		'jan' => __('January', 'car-demon'),
-		'feb' => __('February', 'car-demon'),
-		'mar' => __('March', 'car-demon'),
-		'apr' => __('April', 'car-demon'),
-		'may' => __('May', 'car-demon'),
-		'jun' => __('June', 'car-demon'),
-		'jul' => __('July', 'car-demon'),
-		'aug' => __('August', 'car-demon'),
-		'sep' => __('September', 'car-demon'),
-		'oct' => __('October', 'car-demon'),
-		'nov' => __('November', 'car-demon'),
-		'dec' => __('December', 'car-demon'),
-		'clear' => __('Clear', 'car-demon'), 
-		'close_it' => __('Close', 'car-demon')
-	));
-	wp_enqueue_script( 'fpf-calendar-js' );
-	wp_enqueue_style('fpf-css', plugins_url().'/fancy-product-filters/css/fancy-product-filters.css');
-	wp_enqueue_style('fpf-calendar-css', plugins_url().'/fancy-product-filters/css/CalendarControl.css');
+	wp_enqueue_style('fpf-css', plugins_url().'/fancy-product-filters/css/fancy-product-filters.css', array(), wp_rand());
 	// Adjust modal position if true
 	if ($settings['adjust_modal'] == 'true') {
 		echo '<style>';
@@ -544,6 +525,9 @@ function fpf_send_quote() {
 
 	//	Insert order into FPD
 	require_once('includes/class-shortcode-order.php');
+	error_log($name);
+	error_log($email);
+	error_log($product);
 	$quote_id = FPF_Shortcode_Order::create( $name, $email, $product);
 
 	// Build PDF attachment
