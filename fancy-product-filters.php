@@ -525,9 +525,6 @@ function fpf_send_quote() {
 
 	//	Insert order into FPD
 	require_once('includes/class-shortcode-order.php');
-	error_log($name);
-	error_log($email);
-	error_log($product);
 	$quote_id = FPF_Shortcode_Order::create( $name, $email, $product);
 
 	// Build PDF attachment
