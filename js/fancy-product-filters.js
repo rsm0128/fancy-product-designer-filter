@@ -75,6 +75,7 @@ jQuery( document ).ready(function($) {
 		}
 	}
 
+	// Function to init custom filter
 	function fpf_init_custom_filter() {
 		// Defind custom fabric mask filter
 		fabric.Image.filters.Mask = fabric.util.createClass(fabric.Image.filters.BaseFilter, {
@@ -223,7 +224,7 @@ jQuery( document ).ready(function($) {
 
 	}
 
-	// fpf_add_product_details()
+	// Function to add product details on PDF()
 	function fpf_add_product_details() {
 		let fileTextFront = '';
 		let fileTextBack = '';
@@ -341,6 +342,7 @@ jQuery( document ).ready(function($) {
 		my_stage.calcOffset();
 	}
 
+	// Function to add Watermark (User for send quote only)
 	function fpf_add_watermark() {
 		let my_stage = fancyProductDesigner.viewInstances[0].stage;
 		// Define watermark
@@ -363,7 +365,7 @@ jQuery( document ).ready(function($) {
 		}
 	}
 
-	// fpf_send_quote()
+	// Sent quote handler
 	function fpf_send_quote() {
 		var quote_form = $('[name="fpd_shortcode_form"]');
 		var flds = {}; // form data object
@@ -492,6 +494,7 @@ jQuery( document ).ready(function($) {
 		}
 	}
 
+	// Quote form generator
 	function fpf_init_quote_form() {
 		// Add graphic print size guide
 		if ($('.fpd-content').length) {
@@ -553,19 +556,4 @@ jQuery( document ).ready(function($) {
 			fpf_send_quote();
 		});
 	}
-
-	// Function to list Javascript object methods
-	// Example use: console.log(getMethods(fancyProductDesigner));
-	// Fancy Product Designer methods and events are described in detail at;
-	// http://jsdoc.fancyproductdesigner.com/FancyProductDesigner.html
-	function getMethods(obj) {
-		var res = [];
-		for(var m in obj) {
-			if(typeof obj[m] == "function") {
-				res.push(m)
-			}
-		}
-		return res;
-	}
-	
 });

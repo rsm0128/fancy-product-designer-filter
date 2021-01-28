@@ -4,12 +4,19 @@
 * Plugin URI: http://codeable.io/
 * Description:  Add Filters to the Fancy Product Designer PlugIn and add filter support to additional objects
 * Author: Chuck Mailen, Cris
-* Version: 2.0
+* Version: 2.1
 * Author URI: http://bravetimes.com/
 * License: GPL2
 */
 
 /* Change Log
+
+= 2.1 =
+* Fixed emailing feature
+* Removed redundant code from old version
+
+= 2.0 =
+* Compatible with FPD 4.5.4
 
 = 1.3.3 =
 * Changed timing on when images are added to canvas when sharing
@@ -147,7 +154,6 @@ function fpf_enqueue_scripts() {
 			$is_admin = true;
 		}
 	}
-	// wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.3.0', true );
 	wp_register_script("fpf-js", plugins_url().'/fancy-product-filters/js/fancy-product-filters.js', array('jquery'), '1.0', true );
 	if (strpos($settings['modal_top'], 'px') !== false) {
 		$pixel_or_percent = 'px';
