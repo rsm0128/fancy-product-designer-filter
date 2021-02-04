@@ -1,311 +1,325 @@
 /* CSS Document */
 .fpf-filters {
-	cursor: pointer;
-	width: 75px !important;
-	height: 105px !important;
-	border: none !important;
+    cursor: pointer;
+    width: 75px !important;
+    height: 105px !important;
+    border: none !important;
 }
 
 .fpf-filter-icon {
-	width: 65px;
-	margin: 5px !important;
-	border: 2px solid #fff;
+    width: 65px;
+    margin: 5px !important;
+    border: 2px solid #fff;
 }
 
 .fpf-item.active {
-	color: #a78f60;
+    color: #a78f60;
 }
 
 .fpf-item.active .fpf-filter-icon {
-	outline: 1px solid #999;
+    outline: 1px solid #999;
 }
 
 .fpf-filter-icon-title {
-	margin-left: 5px !important; 
+    margin-left: 5px !important;
 }
 
 .fpf-clear {
-	clear: both;	
+    clear: both;
 }
 
 .fpd-filter-options .fpd-cell-0 {
-	display: none;
+    display: none;
 }
 
 .fpd-filter-options label {
-	float:left;
-	width:100%;
-	display:block;	
+    float: left;
+    width: 100%;
+    display: block;
 }
 
 .fpf-upload-options {
-	padding-left: 22px !important;
+    padding-top: 22px !important;
+    padding-left: 22px !important;
 }
 
 .fpf-upload-scale .fpf-transform-options {
-	padding-left: 22px;
+    padding-left: 22px;
 }
 
 .fpf-helper-btn-label {
-	float: left;
-	margin-left: 15px;
-	margin-bottom: 10px;
-	margin-top: 2px;
+    float: left;
+    margin-left: 15px;
+    margin-bottom: 10px;
+    margin-top: 2px;
 }
 
 .fpd-helper-btns i {
-	display: block;
-	float: left;
-	clear: both;
+    display: block;
+    float: left;
+    clear: both;
 }
 
 .fpf-color-picker-label {
-	margin-left: 5px;
-	padding: 2px;
+    margin-left: 5px;
+    padding: 2px;
 }
 
 .fpd-context-dialog {
-	position: fixed !important;
+    position: fixed !important;
 }
 
 .mCSB_dragger_bar {
-	background-color: #a78f60 !important;
-	width: 18px;
+    background-color: #a78f60 !important;
+    width: 18px;
 }
 
 .fpf-save .fpd-icon-layers:before {
-  content: "\e621";
+    content: "\e621";
 }
 
 .fpf-share .fpd-icon-layers:before {
-  content: "\e608";
+    content: "\e608";
 }
 
 .fpd-snackbar {
     /*position: absolute !important;*/
-	height: 80px;
-	width: 360px;
-	/*font-size: 44px;*/
-	font-family: Futura;
-	text-align: center;
-	padding-top: 30px;
+    height: 80px;
+    width: 360px;
+    /*font-size: 44px;*/
+    font-family: Futura;
+    text-align: center;
+    padding-top: 30px;
 }
 
-.fpf-facebook, .fpf-twitter, .fpf-pintrest {
-	width: 30px;
-	height: 30px;
-	margin-top: 4px;
-	float:left;
+.fpf-facebook,
+.fpf-twitter,
+.fpf-pintrest {
+    width: 30px;
+    height: 30px;
+    margin-top: 4px;
+    float: left;
 }
 
 .fpf-share-text {
-	float:left;
+    float: left;
 }
 
 .fpf-facebook {
-	margin-left: 65px;
+    margin-left: 65px;
 }
 
 .fpf-twitter {
-	margin-left: 80px;
+    margin-left: 80px;
 }
 
 .fpf-pintrest {
-	margin-left: 75px;	
+    margin-left: 75px;
 }
 
 .fpf_action_label {
-	color: #ffffff;
-	font-size: 12px;
+    color: #ffffff;
+    font-size: 12px;
 }
 
-.fpd-icon-move-up, .fpd-icon-move-down {
-	display: none !important;
+.fpd-icon-move-up,
+.fpd-icon-move-down {
+    display: none !important;
 }
 
 .fpd-content-share-spin {
-	margin:5px;	
+    margin: 5px;
 }
 
-.fpd-more .fpd-dropdown-menu>.fpd-save-pdf {
-	display: none !important;
+.fpd-more .fpd-dropdown-menu > .fpd-save-pdf {
+    display: none !important;
 }
 
 .attachment a img {
-	width: auto;
+    width: auto;
 }
 
-.under_quote_message, .bottom_quote_message {
-	color: #a78f60;
-	font-family: 'Futura', sans-serif;
+.under_quote_message,
+.bottom_quote_message {
+    color: #a78f60;
+    font-family: "Futura", sans-serif;
 }
 
 .bottom_quote_message {
-	width: 100%;
-	text-align: center;
+    width: 100%;
+    text-align: center;
 }
 
 .sending_quote {
-	max-width: 300px;
-	width: 100%;
-	margin-left: auto;
-	margin-right: auto;
-	display: inline-block;
+    max-width: 300px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: inline-block;
 }
 
 .sending_quote_title {
-	color: #a78f60;
-	text-align: center;
-	font-family: 'Futura', sans-serif;
+    color: #a78f60;
+    text-align: center;
+    font-family: "Futura", sans-serif;
 }
 
 .quote_received {
-	font-size: 24px;
-	color: #a78f60;
-	text-align: center;
-	font-family: 'Futura', sans-serif;
-	margin-top: 20px;
+    font-size: 24px;
+    color: #a78f60;
+    text-align: center;
+    font-family: "Futura", sans-serif;
+    margin-top: 20px;
 }
 
 .fpf_show {
-	display: inline-block !important;
+    display: inline-block !important;
 }
 
 .fpf_quote_title {
-	font-size: 16px;
-	color: #a78f60;
-	text-align: center;
-	font-family: 'Futura', sans-serif;	
+    font-size: 16px;
+    color: #a78f60;
+    text-align: center;
+    font-family: "Futura", sans-serif;
 }
 
 .fpf-email-design {
-	display: inline-block !important;
+    display: inline-block !important;
 }
 
 .fpf-email-design-form.fpd-list-row {
-	border-top: none;
+    border-top: none;
 }
 
 .fpf-email-design-form .fpd-cell-full {
-	padding-top: 1px;
-	padding-bottom: 5px;
+    padding-top: 1px;
+    padding-bottom: 5px;
 }
 
 .fpf-email-design-form .fpd-cell-full.fpf-email-title {
-	padding-top: 0px;
-	padding-bottom: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 
 .fpf-email-design-form input {
-	width: 100%;
+    width: 100%;
 }
 
 .sending_email {
-	padding: 20px;
-	font-size: 16px;
-	color: #a78f60;
-	text-align: center;
-	font-family: 'Futura', sans-serif;
+    padding: 20px;
+    font-size: 16px;
+    color: #a78f60;
+    text-align: center;
+    font-family: "Futura", sans-serif;
 }
 
 .sending_email img {
-	margin: 30px;
-	width: 40px;
-	margin-left: auto;
-	margin-right: auto;
-	display: block;
+    margin: 30px;
+    width: 40px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
 }
 
-.incomplete{
-	border-color:red!important;
-	background:#f7f7f7;
+.incomplete {
+    border-color: red !important;
+    background: #f7f7f7;
 }
 
 /* Added by Cris */
 .fpd-container .fpd-image-editor-main {
-	position: relative;
-	padding: 15px;
-	z-index: 1;
+    position: relative;
+    padding: 15px;
+    z-index: 1;
 }
 
 .fpd-container .fpd-image-editor-main:before {
-	position: absolute;
-	content: '';
-	width: 100%;
-	height: 100%;
-	left: 0;
-	top: 0;
-	z-index: -1;
-	opacity: 0.8;
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    opacity: 0.8;
 }
 
 .fpd-content {
-	position: relative
+    position: relative;
 }
 
 .fpd-content .print-parameters {
-	display: block!important;
+    display: none;
+    width: 100%;
+    background: #000;
 }
-
-.print-parameters {
-	position: absolute;
-	width: 100%;
-	bottom: 0;
-	left: 0;
-	display: none;
-	background: #000;
+.fpd-content .print-parameters.fpd-active {
+    display: block;
 }
 
 .print-parameters h5 {
-	text-align: center;
-	cursor: pointer;
-	margin-top: 20px;
-  	margin-bottom: 20px;
-  	color: #fff;
+    font-size: 16px;
+    padding-top: 6px;
+    text-align: center;
+    cursor: pointer;
+    color: #fff;
+    display: none;
+}
+/*.print-parameters h5:after {
+    content: " ";
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+}
+.print-parameters.active h5:after {
+    top: 14px;
+    transform: rotate(-135deg);
+    -webkit-transform: rotate(-135deg);
+}*/
+
+.print-parameters .table-wrapper {
+    padding-top: 10px;
+    background: #fff;
+    display: block;
 }
 
 .print-parameters table {
-	background: #fff;
-	width: 100%;
-	text-align: center;
-}
-
-.print-parameters .table-wrapper {
-	display: block;
-	max-height: 0;
-	transition: all 0.5s ease-out;
-}
-
-.print-parameters.active .table-wrapper {
-	max-height: 500px;
+    width: 100%;
+    text-align: center;
 }
 
 .print-parameters table td {
-  padding: 6px 0 4px;
+    padding: 6px 0 4px;
 }
 
 .print-parameters table h3 {
-  font-family: 'Futura', sans-serif;
-  font-weight: normal;
-  font-size: 14px;
-  text-transform: uppercase;
+    font-family: "Futura", sans-serif;
+    font-weight: normal;
+    font-size: 14px;
+    text-transform: uppercase;
 }
 
 .print-parameters table h4 {
-  font-family: 'Futura', sans-serif;
-  font-size: 13px;
-  font-weight: normal;
-  color: #aa905c;
+    font-family: "Futura", sans-serif;
+    font-size: 13px;
+    font-weight: normal;
+    color: #aa905c;
 }
 
-.fpd-container .request-quote {
+.fpd-container .custom-tab {
     max-width: 100%;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
     text-shadow: none;
     outline: 0;
     line-height: 20px;
-	display: block;
+    display: block;
     -webkit-box-flex: 1;
     -ms-flex: 1;
     flex: 1;
@@ -316,27 +330,27 @@
 }
 
 .quote-modal-overlay {
-	position: fixed;
-	width: 100%;
+    position: fixed;
+    width: 100%;
     bottom: 0;
     right: 0;
     top: 0;
     left: 0;
-    background: rgba(0,0,0,.5);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 10000;
     overflow: auto;
-	transition: all 0.5s ease;
-	opacity: 0;
-	visibility: hidden;
+    transition: all 0.5s ease;
+    opacity: 0;
+    visibility: hidden;
 }
 
 .quote-modal-overlay.active {
-	opacity: 1;	
-	visibility: visible;
+    opacity: 1;
+    visibility: visible;
 }
 
 .quote-modal-wrapper {
-	background: #fff;
+    background: #fff;
     width: 450px;
     max-width: 90%;
     min-height: 200px;
@@ -353,37 +367,66 @@
 }
 
 .quote-modal-close {
-	position: absolute;
+    position: absolute;
     right: 15px;
     top: 15px;
     font-size: 24px;
     cursor: pointer;
-    opacity: .6;
+    opacity: 0.6;
     -webkit-transition: opacity 200ms ease-out;
     transition: opacity 200ms ease-out;
 }
 
 .quote-modal-body {
-	color: rgba(0,0,0,.7);
+    color: rgba(0, 0, 0, 0.7);
     line-height: 22px;
     margin-top: 20px;
     word-break: break-word;
 }
 @media (max-width: 767px) {
-	.fpd-container .request-quote {
-		height: 100%;
-	    -webkit-box-flex: 1;
-	    -ms-flex: 1 0 auto;
-	    flex: 1 0 auto;
-	    white-space: nowrap;
-	    padding: 0 20px;
-	}
-
-
+    .fpd-container .custom-tab {
+        height: 100%;
+        -webkit-box-flex: 1;
+        -ms-flex: 1 0 auto;
+        flex: 1 0 auto;
+        white-space: nowrap;
+        padding: 0 20px;
+    }
 }
-.fpd-sidebar.fpd-tabs-side .fpd-navigation .request-quote>span
-{
-	font-size: 28px;
-	padding: 10px 0;
-	display: inline-block;
+.fpd-sidebar.fpd-tabs-side .fpd-navigation .custom-tab > span {
+    font-size: 28px;
+    padding: 10px 0;
+    display: inline-block;
 }
+@media (max-width: 767px) {
+    .fpd-sidebar.fpd-tabs-side .fpd-navigation .custom-tab > span {
+        padding-top: 18px;
+        padding-bottom: 5px;
+    }
+    .fpd-ui-theme-doyle .fpd-mainbar .fpd-navigation {
+        height: auto;
+    }
+}
+.fpd-element-toolbar-side.fpd-type-image .fpd-icon-close:before {
+    content: "\e621";
+}
+.fpd-snackbar-wrapper p {
+    color: #fff !important;
+}
+.fpd-snackbar-wrapper .fpd-snackbar {
+    padding-top: 0;
+    height: 60px;
+}
+@media (max-width: 767px) {
+    .fpd-module-visible .fpd-close-off-canvas {
+        display: block;
+        margin-left: auto;
+    }
+}
+.fpd-navigation > span.fpd-active {
+    color: #000 !important;
+    background: #fff !important;
+}
+/* .main-header .header-main-container {
+    display: none;
+} */
